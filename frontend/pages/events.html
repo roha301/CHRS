@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KKWIEER - Events</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body onload="checkAuth(); loadEvents()">
+    <div id="notification" class="notification"></div>
+
+    <nav class="glass-card" style="margin: 1rem; padding: 1rem 2rem; border-radius: 1rem; display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <img src="../assets/kkw_logo.png" alt="KKW Logo" style="height: 30px; width: auto;">
+            <h2 style="color: white; font-family: Poppins, sans-serif; font-size: 1.4rem; margin: 0;">KKWIEER</h2>
+        </div>
+        <div style="display: flex; gap: 2rem; align-items: center;">
+            <a href="dashboard.html" style="color: rgba(255,255,255,0.8); text-decoration: none;">Dashboard</a>
+            <a href="halls.html" style="color: rgba(255,255,255,0.8); text-decoration: none;">Reserve Hall</a>
+            <a href="bookings.html" style="color: rgba(255,255,255,0.8); text-decoration: none;">My Bookings</a>
+            <a href="events.html" style="color: white; text-decoration: none; font-weight: 600;">Events</a>
+            <a href="#" onclick="localStorage.clear(); window.location.href='../index.html'" style="color: rgba(255,200,200,0.9); text-decoration: none;"><i class="fas fa-sign-out-alt"></i></a>
+        </div>
+    </nav>
+
+    <main style="padding: 2rem;">
+        <!-- Header -->
+        <div style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+            <div>
+                <h1>Events</h1>
+                <p style="color: var(--text-muted)">Create events, generate registration QR codes, and track participants.</p>
+            </div>
+            <div style="display: flex; gap: 1rem;">
+                <button class="btn btn-outline" onclick="showTab('all')"><i class="fas fa-globe"></i> All Events</button>
+                <button class="btn btn-primary" onclick="showTab('create')"><i class="fas fa-plus"></i> Create Event</button>
+                <button class="btn btn-outline" onclick="showTab('mine')"><i class="fas fa-calendar-check"></i> My Events</button>
+            </div>
+        </div>
+
+        <!-- Create Event Form -->
+        <div id="tab-create" style="display: none; margin-bottom: 2rem;">
+            <div class="glass-card animate-fade" style="max-width: 700px; margin: 0 auto;">
+                <h2 style="margin-bottom: 1.5rem; color: var(--primary);"><i class="fas fa-calendar-plus"></i> Create New Event</h2>
+                <form id="create-event-form">
+                    <h3 style="margin-bottom: 0.75rem; color: var(--text-muted); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.05em;"><i class="fas fa-user-tie"></i> Organizer Details</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div>
+                            <label>Organizer Name</label>
+                            <input type="text" id="ev-org-name" placeholder="Your name" required>
+                        </div>
+                        <div>
+                            <label>Email</label>
+                            <input type="email" id="ev-org-email" placeholder="you@kkwagh.edu.in" required>
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div>
+                            <label>Year</label>
+                            <select id="ev-org-year" required>
+                                <option value="">Select Year</option>
+                                <option value="FE">FE</option>
+                                <option value="SE">SE</option>
+                                <option value="TE">TE</option>
+                                <option value="BE">BE</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label>Department</label>
+                            <select id="ev-org-dept" required>
+                                <option value="">Select Department</option>
+                                <option value="Computer Engineering">Computer Engineering</option>
+                                <option value="Information Technology">Information Technology</option>
+                                <option value="Electronics & Telecomm">Electronics & Telecomm</option>
+                                <option value="Mechanical Engineering">Mechanical Engineering</option>
+                                <option value="Civil Engineering">Civil Engineering</option>
+                                <option value="AI & Data Science">AI & Data Science</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <hr style="border: none; border-top: 1px solid var(--border-color); margin: 1.25rem 0;">
+                    <h3 style="margin-bottom: 0.75rem; color: var(--text-muted); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.05em;"><i class="fas fa-calendar-alt"></i> Event Details</h3>
+
+                    <label>Event Title</label>
+                    <input type="text" id="ev-title" placeholder="e.g. Tech Fest 2025" required>
+
+                    <label>Description</label>
+                    <textarea id="ev-desc" rows="3" placeholder="Tell participants about this event..."></textarea>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div>
+                            <label>Hall Name</label>
+                            <input type="text" id="ev-hall-name" placeholder="Hall name" required>
+                        </div>
+                        <div>
+                            <label>Category</label>
+                            <select id="ev-category">
+                                <option value="Technical">Technical</option>
+                                <option value="Cultural">Cultural</option>
+                                <option value="Workshop">Workshop</option>
+                                <option value="Seminar">Seminar</option>
+                                <option value="Sports">Sports</option>
+                                <option value="General">General</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+                        <div>
+                            <label>Date</label>
+                            <input type="date" id="ev-date" required>
+                        </div>
+                        <div>
+                            <label>Start Time</label>
+                            <input type="time" id="ev-start" required>
+                        </div>
+                        <div>
+                            <label>End Time</label>
+                            <input type="time" id="ev-end" required>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div>
+                            <label>Organizing Club</label>
+                            <select id="ev-club">
+                                <option value="None">No Club</option>
+                                <option value="DeSoc">DeSoc</option>
+                                <option value="CSI">CSI</option>
+                                <option value="TEDx">TEDx</option>
+                                <option value="Debuggers Club">Debuggers Club</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label>Max Participants</label>
+                            <input type="number" id="ev-max" placeholder="100" min="1" value="100">
+                        </div>
+                    </div>
+
+                    <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">
+                        <input type="checkbox" id="ev-requires-reg" style="width: auto; margin: 0;">
+                        <label style="margin: 0; font-weight: 500;">Enable Registration (participants must sign up)</label>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;">
+                        <i class="fas fa-rocket"></i> Create Event &amp; Generate QR
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- All Events -->
+        <div id="tab-all">
+            <h2 style="margin-bottom: 1.5rem; color: var(--text-muted); font-size: 1rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em;">All Upcoming Events</h2>
+            <div id="all-events-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem;">
+                <p style="color: var(--text-muted);">Loading events...</p>
+            </div>
+        </div>
+
+        <!-- My Events -->
+        <div id="tab-mine" style="display: none;">
+            <h2 style="margin-bottom: 1.5rem; color: var(--text-muted); font-size: 1rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em;">Events I Organized</h2>
+            <div id="my-events-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem;">
+                <p style="color: var(--text-muted);">No events yet.</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Analytics Modal -->
+    <div id="analytics-modal" style="display:none; position:fixed; inset:0; z-index:1001; background:rgba(10,20,60,0.55); backdrop-filter:blur(4px); align-items:center; justify-content:center;" onclick="if(event.target===this) closeAnalyticsModal()">
+        <div class="glass-card animate-fade" style="width:92%; max-width:600px; max-height:85vh; overflow-y:auto;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+                <h2 style="color:var(--primary);"><i class="fas fa-chart-bar"></i> Event Analytics</h2>
+                <button class="btn btn-outline btn-sm" onclick="closeAnalyticsModal()"><i class="fas fa-times"></i></button>
+            </div>
+            <div id="analytics-content">Loading...</div>
+        </div>
+    </div>
+
+    <!-- QR Modal -->
+    <div id="qr-modal" style="display:none; position:fixed; inset:0; z-index:1001; background:rgba(10,20,60,0.55); backdrop-filter:blur(4px); align-items:center; justify-content:center;" onclick="if(event.target===this) closeQrModal()">
+        <div class="glass-card animate-fade" style="width:92%; max-width:420px; text-align:center;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                <h2 style="color:var(--primary);">Registration QR Code</h2>
+                <button class="btn btn-outline btn-sm" onclick="closeQrModal()"><i class="fas fa-times"></i></button>
+            </div>
+            <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:1rem;">Participants can scan this QR code to register for the event.</p>
+            <div id="qr-canvas" style="width:240px; height:240px; margin:0 auto; border:4px solid var(--border-color); border-radius:8px; overflow:hidden;"></div>
+            <p id="qr-event-title" style="margin-top:1rem; font-weight:600;"></p>
+            <a id="qr-link" href="#" target="_blank" rel="noopener noreferrer" style="display:block; margin-top:0.75rem; font-size:0.85rem; color:var(--primary); word-break:break-all;"></a>
+            <a id="qr-download-btn" class="btn btn-primary" style="display:inline-block; margin-top:1rem;" download="event_qr.png">
+                <i class="fas fa-download"></i> Download QR
+            </a>
+        </div>
+    </div>
+
+    <div id="modal-overlay" style="display:none;"></div>
+
+    <script src="../js/api.js"></script>
+    <script>
+        function getCurrentUser() {
+            try {
+                return JSON.parse(localStorage.getItem('user') || 'null');
+            } catch {
+                return null;
+            }
+        }
+
+        function canViewEventAnalytics(ev) {
+            const user = getCurrentUser();
+            if (!user) return false;
+            return user.role === 'admin' || ev.organizerId === user.id;
+        }
+
+        function canDeleteEvent(ev) {
+            const user = getCurrentUser();
+            if (!user) return false;
+            return ev.organizerId === user.id;
+        }
+
+        function escapeInlineJsString(value) {
+            return String(value || '')
+                .replace(/\\/g, '\\\\')
+                .replace(/'/g, "\\'");
+        }
+
+        async function loadEvents() {
+            try {
+                const [allEvs, myEvs] = await Promise.all([
+                    api.events.getAll(),
+                    api.events.getMine().catch(() => [])
+                ]);
+                renderEventGrid('all-events-grid', allEvs, false);
+                renderEventGrid('my-events-grid', myEvs, true);
+            } catch (err) {
+                document.getElementById('all-events-grid').innerHTML = `<p style="color: var(--error)">${err.message}</p>`;
+            }
+        }
+
+        function categoryColor(cat) {
+            const m = {Technical:'#1d4ed8',Cultural:'#7c3aed',Workshop:'#059669',Seminar:'#d97706',Sports:'#dc2626',General:'#475569'};
+            return m[cat] || '#475569';
+        }
+
+        function fmtDate(d) {
+            try {
+                return new Date(d).toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+            } catch { return d; }
+        }
+
+        function renderEventGrid(containerId, events, isMine) {
+            const c = document.getElementById(containerId);
+            if (!events || events.length === 0) {
+                c.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 2rem;">No events found.</p>';
+                return;
+            }
+            c.innerHTML = events.map(ev => `
+                ${(() => {
+                    const canViewAnalytics = canViewEventAnalytics(ev);
+                    const canDelete = canDeleteEvent(ev);
+                    const accessNote = canDelete
+                        ? '<i class="fas fa-user-shield"></i> You created this event'
+                        : (canViewAnalytics ? '<i class="fas fa-user-shield"></i> Admin analytics access' : '');
+                    const orgInfo = [ev.organizerYear, ev.organizerDept].filter(Boolean).join(' | ');
+                    return `
+                <div class="glass-card animate-fade" style="display: flex; flex-direction: column;">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.75rem;">
+                        <h3 style="margin: 0; color: var(--primary); font-size: 1.1rem;">${ev.title}</h3>
+                        <span style="font-size: 0.7rem; font-weight: 600; padding: 0.2rem 0.6rem; border-radius: 100px; background: ${categoryColor(ev.category)}1a; color: ${categoryColor(ev.category)};">${ev.category}</span>
+                    </div>
+                    <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 0.5rem;">${ev.description || ''}</p>
+                    <div style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.35rem;">
+                        <i class="fas fa-user-tie"></i> ${ev.organizerName}${orgInfo ? ' <span style="opacity:0.7">' + orgInfo + '</span>' : ''}${ev.organizerEmail ? ' &bull; <span style="opacity:0.7">' + ev.organizerEmail + '</span>' : ''}
+                    </div>
+                    <div style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.5rem;">
+                        <i class="fas fa-map-marker-alt"></i> ${ev.hallName}
+                        &nbsp;|&nbsp; <i class="fas fa-calendar"></i> ${fmtDate(ev.date)}
+                    </div>
+                    <div style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+                        <i class="fas fa-clock"></i> ${ev.startTime} &ndash; ${ev.endTime}
+                        ${ev.club && ev.club !== 'None' ? `&nbsp;|&nbsp; <i class="fas fa-users"></i> ${ev.club}` : ''}
+                    </div>
+                    ${ev.requiresRegistration ? `<div style="font-size: 0.78rem; background: rgba(29,78,216,0.07); padding: 0.4rem 0.7rem; border-radius: 4px; color: var(--primary); margin-bottom: 0.75rem;"><i class="fas fa-qrcode"></i> Registration Open &bull; ${(ev.participants||[]).length}/${ev.maxParticipants} registered</div>` : ''}
+                    ${accessNote ? `<div style="font-size: 0.78rem; background: rgba(22,163,74,0.07); padding: 0.4rem 0.7rem; border-radius: 4px; color: var(--success); margin-bottom: 0.75rem;">${accessNote}</div>` : ''}
+                    <div style="margin-top: auto; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                        ${ev.requiresRegistration ? `<button class="btn btn-outline btn-sm" onclick="showQR('${ev._id}')"><i class="fas fa-qrcode"></i> QR Code</button>` : ''}
+                        ${canViewAnalytics ? `<button class="btn btn-primary btn-sm" onclick="showAnalytics('${ev._id}')"><i class="fas fa-chart-bar"></i> Analytics</button>` : ''}
+                        ${canDelete ? `<button class="btn btn-outline btn-sm" style="color: var(--error); border-color: var(--error);" onclick="deleteEvent('${ev._id}', '${escapeInlineJsString(ev.title)}')"><i class="fas fa-trash"></i> Delete Event</button>` : ''}
+                    </div>
+                </div>
+            `;
+                })()}
+            `).join('');
+        }
+
+        function showTab(tab) {
+            document.getElementById('tab-create').style.display = tab === 'create' ? 'block' : 'none';
+            document.getElementById('tab-all').style.display = tab === 'all' ? 'block' : 'none';
+            document.getElementById('tab-mine').style.display = tab === 'mine' ? 'block' : 'none';
+        }
+
+        async function showQR(eventId) {
+            const ev = await api.events.getOne(eventId);
+            const regPath = ev.registrationPath || `/pages/event_register.html?eventId=${eventId}`;
+
+            // If the browser is on localhost, fetch the real LAN IP so phones can reach the server
+            let baseUrl = window.location.origin;
+            const hostname = window.location.hostname;
+            if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '0.0.0.0') {
+                try {
+                    const info = await api.fetch('/events/server-info');
+                    baseUrl = `${window.location.protocol}//${info.ip}:${info.port}`;
+                } catch (e) {
+                    console.warn('Could not fetch server-info, using origin:', e);
+                }
+            }
+            const fullUrl = baseUrl + regPath;
+
+            document.getElementById('qr-event-title').textContent = ev.title;
+            document.getElementById('qr-link').href = fullUrl;
+            document.getElementById('qr-link').textContent = fullUrl;
+
+            // Generate QR code on the fly
+            const container = document.getElementById('qr-canvas');
+            container.innerHTML = '';
+            const qr = new QRCode(container, {
+                text: fullUrl,
+                width: 232,
+                height: 232,
+                colorDark: '#000000',
+                colorLight: '#ffffff',
+                correctLevel: QRCode.CorrectLevel.H
+            });
+
+            // Wait a tick for the library to render, then wire up the download button
+            setTimeout(() => {
+                const img = container.querySelector('img') || container.querySelector('canvas');
+                if (img) {
+                    const src = img.tagName === 'CANVAS' ? img.toDataURL('image/png') : img.src;
+                    document.getElementById('qr-download-btn').href = src;
+                }
+            }, 100);
+
+            document.getElementById('qr-modal').style.display = 'flex';
+        }
+
+        function closeQrModal() {
+            document.getElementById('qr-modal').style.display = 'none';
+        }
+
+        async function showAnalytics(eventId) {
+            document.getElementById('analytics-modal').style.display = 'flex';
+            document.getElementById('analytics-content').innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 2rem;">Loading...</p>';
+            try {
+                const data = await api.events.getAnalytics(eventId);
+                const fillWidth = Math.min(data.fillRate, 100);
+                document.getElementById('analytics-content').innerHTML = `
+                    <h3 style="margin-bottom: 1.5rem;">${data.title}</h3>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem;">
+                        <div style="text-align: center; background: rgba(29,78,216,0.07); padding: 1rem; border-radius: 0.5rem;">
+                            <div style="font-size: 2rem; font-weight: 800; color: var(--primary); font-family: Poppins, sans-serif;">${data.totalRegistered}</div>
+                            <div style="font-size: 0.8rem; color: var(--text-muted);">Registered</div>
+                        </div>
+                        <div style="text-align: center; background: rgba(29,78,216,0.07); padding: 1rem; border-radius: 0.5rem;">
+                            <div style="font-size: 2rem; font-weight: 800; color: var(--primary); font-family: Poppins, sans-serif;">${data.maxParticipants}</div>
+                            <div style="font-size: 0.8rem; color: var(--text-muted);">Capacity</div>
+                        </div>
+                        <div style="text-align: center; background: rgba(29,78,216,0.07); padding: 1rem; border-radius: 0.5rem;">
+                            <div style="font-size: 2rem; font-weight: 800; color: var(--primary); font-family: Poppins, sans-serif;">${data.fillRate}%</div>
+                            <div style="font-size: 0.8rem; color: var(--text-muted);">Fill Rate</div>
+                        </div>
+                    </div>
+                    <div style="margin-bottom: 1rem;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.4rem; font-size: 0.85rem; font-weight: 500;">
+                            <span>Registration Progress</span><span>${data.fillRate}%</span>
+                        </div>
+                        <div style="background: var(--bg-main); border-radius: 100px; height: 10px; overflow: hidden;">
+                            <div style="width: ${fillWidth}%; height: 100%; background: var(--primary); border-radius: 100px; transition: width 0.6s ease;"></div>
+                        </div>
+                    </div>
+                    <h4 style="margin: 1.5rem 0 0.75rem; font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Participants (${data.totalRegistered})</h4>
+                    <div style="max-height: 250px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 0.5rem;">
+                        ${data.participants.length === 0 ? '<p style="padding: 1rem; color: var(--text-muted); text-align: center;">No registrations yet.</p>' :
+                        data.participants.map((p, i) => `
+                            <div style="padding: 0.6rem 1rem; display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-color); font-size: 0.875rem; ${i===0?'border-radius: 0.5rem 0.5rem 0 0':''}">
+                                <span style="font-weight: 500;">${i+1}. ${p.name} <span style="color:var(--text-muted); font-size:0.8rem; font-weight:normal;">${[p.year, p.department].filter(Boolean).join(' | ')}</span></span>
+                                <span style="color: var(--text-muted);">${new Date(p.timestamp).toLocaleTimeString()}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } catch (err) {
+                document.getElementById('analytics-content').innerHTML = `<p style="color: var(--error)">Failed to load analytics: ${err.message}</p>`;
+            }
+        }
+
+        function closeAnalyticsModal() {
+            document.getElementById('analytics-modal').style.display = 'none';
+        }
+
+        async function deleteEvent(id, title = 'this event') {
+            if (!confirm(`Delete "${title}" permanently?`)) return;
+            try {
+                await api.events.delete(id);
+                showNotification('Event deleted', 'success');
+                loadEvents();
+            } catch (err) {
+                showNotification(err.message, 'error');
+            }
+        }
+
+        document.getElementById('create-event-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const payload = {
+                title: document.getElementById('ev-title').value,
+                description: document.getElementById('ev-desc').value,
+                hallName: document.getElementById('ev-hall-name').value,
+                category: document.getElementById('ev-category').value,
+                date: document.getElementById('ev-date').value,
+                startTime: document.getElementById('ev-start').value,
+                endTime: document.getElementById('ev-end').value,
+                club: document.getElementById('ev-club').value,
+                maxParticipants: document.getElementById('ev-max').value,
+                requiresRegistration: document.getElementById('ev-requires-reg').checked,
+                organizerYear: document.getElementById('ev-org-year').value,
+                organizerDept: document.getElementById('ev-org-dept').value,
+                organizerEmail: document.getElementById('ev-org-email').value,
+                organizerName: document.getElementById('ev-org-name').value
+            };
+            try {
+                const ev = await api.events.create(payload);
+                showNotification('Event created successfully!', 'success');
+                e.target.reset();
+                prefillOrgName();
+                await loadEvents();
+                showTab('mine');
+                if (ev.requiresRegistration) {
+                    setTimeout(() => showQR(ev._id), 500);
+                }
+            } catch (err) {
+                showNotification(err.message, 'error');
+            }
+        };
+
+        // Pre-fill organizer name from logged-in user
+        function prefillOrgName() {
+            const user = getCurrentUser();
+            if (user && user.name) {
+                document.getElementById('ev-org-name').value = user.name;
+            }
+        }
+        prefillOrgName();
+    </script>
+</body>
+</html>

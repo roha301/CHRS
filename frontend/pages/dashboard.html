@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KKWIEER - Dashboard</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body onload="checkAuth(); loadDashboard()">
+    <div id="notification" class="notification"></div>
+
+    <nav class="glass-card" style="margin: 1rem; padding: 1rem 2rem; border-radius: 1rem; display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <img src="../assets/kkw_logo.png" alt="KKW Logo" style="height: 30px; width: auto;">
+            <h2 style="color: white; font-family: Poppins, sans-serif; font-size: 1.4rem; margin: 0;">KKWIEER</h2>
+        </div>
+        <div style="display: flex; gap: 2rem; align-items: center;">
+            <a href="dashboard.html" style="color: white; text-decoration: none; font-weight: 600;">Dashboard</a>
+            <a href="halls.html" style="color: rgba(255,255,255,0.8); text-decoration: none;">Reserve Hall</a>
+            <a href="bookings.html" style="color: rgba(255,255,255,0.8); text-decoration: none;">My Bookings</a>
+            <a href="events.html" style="color: rgba(255,255,255,0.8); text-decoration: none;">Events</a>
+            <a href="#" onclick="logout()" style="color: rgba(255,200,200,0.9); text-decoration: none;"><i class="fas fa-sign-out-alt"></i></a>
+        </div>
+    </nav>
+
+    <main style="padding: 2rem;">
+        <!-- Profile Banner -->
+        <div class="glass-card animate-fade" style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; padding: 1.5rem;">
+            <div style="display: flex; gap: 1.5rem; align-items: center;">
+                <div id="profile-avatar" style="width: 70px; height: 70px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), var(--secondary)); display: flex; justify-content: center; align-items: center; font-size: 2rem; font-weight: bold; color: white; flex-shrink: 0;">?</div>
+                <div>
+                    <h2 id="profile-name" style="margin: 0 0 0.25rem;">Student</h2>
+                    <p id="profile-email" style="color: var(--text-muted); font-size: 0.9rem; margin: 0 0 0.5rem;">user@kkwagh.edu.in</p>
+                    <span id="profile-role" style="font-size: 0.75rem; font-weight: bold; padding: 0.2rem 0.6rem; background: rgba(99,102,241,0.2); color: var(--primary); border-radius: 4px;">STUDENT</span>
+                </div>
+            </div>
+            <div id="welcome-msg" style="font-size: 1rem; color: var(--text-muted);"></div>
+        </div>
+
+        <p style="color: var(--text-muted); margin-bottom: 2rem;">Here's what's happening today.</p>
+
+        <div id="admin-stats-section" style="display: none; margin-bottom: 2rem;" class="glass-card animate-fade">
+            <h3><i class="fas fa-chart-line" style="color: var(--secondary); margin-right: 0.5rem;"></i> Admin Analytics</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                <div>
+                    <p style="color: var(--text-muted); font-size: 0.8rem;">Top Performing Hall</p>
+                    <h4 id="admin-top-hall">N/A</h4>
+                </div>
+                <div>
+                    <p style="color: var(--text-muted); font-size: 0.8rem;">Peak Booking Time</p>
+                    <h4 id="admin-peak-time">N/A</h4>
+                </div>
+                <div>
+                    <p style="color: var(--text-muted); font-size: 0.8rem;">Approved Rate</p>
+                    <h4 id="admin-approved-rate">0%</h4>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Overview -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem; margin-bottom: 2rem;">
+            <div class="glass-card animate-fade">
+                <i class="fas fa-calendar-check" style="font-size: 2rem; color: var(--primary); margin-bottom: 1rem;"></i>
+                <h3 id="stat-total">0</h3>
+                <p style="color: var(--text-muted)">Total Bookings</p>
+            </div>
+            <div class="glass-card animate-fade" style="animation-delay: 0.1s;">
+                <i class="fas fa-hourglass-start" style="font-size: 2rem; color: var(--warning); margin-bottom: 1rem;"></i>
+                <h3 id="stat-pending">0</h3>
+                <p style="color: var(--text-muted)">Pending Approvals</p>
+            </div>
+            <div class="glass-card animate-fade" style="animation-delay: 0.2s;">
+                <i class="fas fa-check-circle" style="font-size: 2rem; color: var(--success); margin-bottom: 1rem;"></i>
+                <h3 id="stat-approved">0</h3>
+                <p style="color: var(--text-muted)">Active Reservations</p>
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+            <!-- Recommendations -->
+            <div class="glass-card animate-fade" style="animation-delay: 0.3s;">
+                <h3><i class="fas fa-magic" style="color: var(--secondary); margin-right: 0.5rem;"></i> Smart Recommendations</h3>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem;">Based on your recent activity and preferences.</p>
+                <div id="recommendations-list" style="display: flex; flex-direction: column; gap: 1rem;">
+                    <p style="color: var(--text-muted); font-size: 0.85rem;">Loading suggestions...</p>
+                </div>
+            </div>
+
+            <!-- Calendar -->
+            <div class="glass-card animate-fade" style="animation-delay: 0.4s;">
+                <h3><i class="fas fa-calendar-alt" style="color: var(--primary); margin-right: 0.5rem;"></i> Calendar View</h3>
+                <div id="calendar-view" style="margin-top: 1rem;">
+                    <!-- Calendar will render here -->
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-card animate-fade" style="animation-delay: 0.5s;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 1rem;">
+                <h3>Recent Activity</h3>
+                <a href="bookings.html" style="color: var(--primary); font-size: 0.9rem;">View All</a>
+            </div>
+            <div id="recent-bookings" style="display: flex; flex-direction: column; gap: 0.75rem;">
+                <p style="color: var(--text-muted); text-align: center; padding: 1rem;">No bookings found yet.</p>
+            </div>
+        </div>
+    </main>
+
+    <script src="../js/api.js"></script>
+    <script src="../js/calendar.js"></script>
+    <script>
+        async function loadDashboard() {
+            try {
+                // Populate Profile Banner
+                const user = JSON.parse(localStorage.getItem('user'));
+                if (user) {
+                    document.getElementById('profile-name').textContent = user.name || 'Student';
+                    document.getElementById('profile-email').textContent = user.email || '';
+                    document.getElementById('profile-role').textContent = (user.role || 'student').toUpperCase();
+                    document.getElementById('profile-avatar').textContent = (user.name || 'S').charAt(0).toUpperCase();
+                    document.getElementById('welcome-msg').textContent = `Welcome back, ${user.name}!`;
+                }
+
+                // Fetch both user bookings and global approved bookings in parallel
+                const [allBookings, approvedGlobal] = await Promise.all([
+                    api.bookings.getUserBookings(),
+                    api.bookings.getApproved().catch(() => [])
+                ]);
+
+                // Exclude cancelled from stats
+                const activeBookings = allBookings.filter(b => b.status !== 'Cancelled');
+                document.getElementById('stat-total').textContent = activeBookings.length;
+                document.getElementById('stat-pending').textContent = activeBookings.filter(b => b.status === 'Pending').length;
+                document.getElementById('stat-approved').textContent = activeBookings.filter(b => b.status === 'Approved').length;
+
+                // Calendar: use global approved bookings so it matches the "Reserve Hall" page
+                renderCalendar(approvedGlobal, 'calendar-view');
+
+                // Load Recommendations
+                loadRecommendations();
+
+                // If admin, load extra stats
+                if (user && user.role === 'admin') {
+                    loadAdminStats();
+                }
+
+                // Recent activity: show non-cancelled bookings only
+                const recentContainer = document.getElementById('recent-bookings');
+                const recentBookings = activeBookings.slice(0, 3);
+                if (recentBookings.length > 0) {
+                    recentContainer.innerHTML = recentBookings.map(b => `
+                        <div style="background: var(--bg-main); padding: 0.75rem 1rem; border-radius: 0.5rem; display: flex; justify-content: space-between; align-items: center; border-left: 3px solid ${getStatusColor(b.status)};">
+                            <div>
+                                <span style="font-weight: 600; font-size: 0.9rem;">${b.eventName || 'Event'} — ${b.hall?.name || 'Hall'}</span><br>
+                                <span style="font-size: 0.8rem; color: var(--text-muted);">${new Date(b.date).toLocaleDateString()} | ${b.startTime} - ${b.endTime}</span>
+                            </div>
+                            <span style="color: ${getStatusColor(b.status)}; font-size: 0.8rem; font-weight: bold;">${b.status}</span>
+                        </div>
+                    `).join('');
+                } else {
+                    recentContainer.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 1rem;">No active bookings yet.</p>';
+                }
+            } catch (err) {
+                showNotification(err.message, 'error');
+
+            }
+        }
+
+        async function loadRecommendations() {
+            try {
+                const recs = await api.bookings.getRecommendations({ capacity: 50 }); // Default small search
+                const container = document.getElementById('recommendations-list');
+                if (recs.length === 0) {
+                    container.innerHTML = '<p style="color: var(--text-muted); font-size: 0.85rem;">No recommendations yet.</p>';
+                    return;
+                }
+                container.innerHTML = recs.map(h => `
+                    <div style="display: flex; gap: 1rem; align-items: center; background: rgba(255,255,255,0.02); padding: 0.5rem; border-radius: 0.5rem;">
+                        <div style="flex: 1;">
+                            <span style="font-size: 0.9rem; font-weight: bold;">${h.name}</span><br>
+                            <span style="font-size: 0.75rem; color: var(--text-muted);">Cap: ${h.capacity} | ${h.location}</span>
+                        </div>
+                        <a href="halls.html?id=${h._id}" class="btn btn-primary" style="padding: 0.25rem 0.5rem; font-size: 0.7rem;">Book</a>
+                    </div>
+                `).join('');
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function downloadPoster(bookingId) {
+            try {
+                showNotification('Generating poster...', 'info');
+                const data = await api.bookings.getPoster(bookingId);
+                const link = document.createElement('a');
+                link.href = data.poster;
+                link.download = `event_poster_${bookingId}.png`;
+                link.click();
+                showNotification('Poster downloaded!', 'success');
+            } catch (err) {
+                showNotification('Failed to generate poster', 'error');
+            }
+        }
+
+        async function loadAdminStats() {
+            try {
+                const stats = await api.bookings.getStats();
+                document.getElementById('admin-stats-section').style.display = 'block';
+                document.getElementById('admin-top-hall').textContent = stats.topHall;
+                document.getElementById('admin-peak-time').textContent = stats.peakTimes[0] || 'N/A';
+                document.getElementById('admin-approved-rate').textContent = `${Math.round(stats.approvalRate || 0)}%`;
+            } catch (err) {
+                console.error('Failed to load admin stats', err);
+            }
+        }
+
+        function getStatusColor(status) {
+            if (status === 'Approved') return 'var(--success)';
+            if (status === 'Pending') return 'var(--warning)';
+            if (status === 'Completed') return '#3b82f6';
+            if (status === 'Released') return '#64748b';
+            return 'var(--error)';
+        }
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = '../index.html';
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KKWIEER - Admin Control Room</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .shell {
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .grid-2,
+        .grid-3,
+        .grid-halls {
+            display: grid;
+            gap: 1.25rem;
+        }
+
+        .grid-2 {
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        }
+
+        .grid-3 {
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        }
+
+        .grid-halls {
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        }
+
+        .hero {
+            background: linear-gradient(135deg, rgba(29, 78, 216, 0.96), rgba(37, 99, 235, 0.9));
+            color: white;
+            border: none;
+        }
+
+        .hero h1,
+        .hero p,
+        .hero h3 {
+            color: white;
+        }
+
+        .row,
+        .toolbar,
+        .actions,
+        .header-line {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .subtle {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            padding: 0.45rem 0.85rem;
+            border-radius: 999px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            border: 1px solid var(--border-color);
+            background: #f8fbff;
+        }
+
+        .hero .chip {
+            color: white;
+            border-color: rgba(255, 255, 255, 0.22);
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        .metric {
+            padding: 1.15rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            background: linear-gradient(180deg, #ffffff, #f8fbff);
+        }
+
+        .metric small {
+            display: block;
+            color: var(--text-muted);
+            margin-bottom: 0.35rem;
+        }
+
+        .metric strong {
+            display: block;
+            font-size: 1.8rem;
+            font-family: 'Poppins', sans-serif;
+            color: var(--primary);
+        }
+
+        .stack {
+            display: flex;
+            flex-direction: column;
+            gap: 0.9rem;
+        }
+
+        .cardish,
+        .trend-card,
+        .empty {
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            background: #fcfdff;
+            padding: 1rem;
+        }
+
+        .empty {
+            text-align: center;
+            color: var(--text-muted);
+            border-style: dashed;
+        }
+
+        .trend-row {
+            display: grid;
+            grid-template-columns: 72px 1fr 56px;
+            gap: 0.75rem;
+            align-items: center;
+            font-size: 0.86rem;
+        }
+
+        .bars {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .bar {
+            height: 10px;
+            border-radius: 999px;
+        }
+
+        .bar-total {
+            background: linear-gradient(90deg, var(--secondary), var(--primary));
+        }
+
+        .bar-approved {
+            background: linear-gradient(90deg, #34d399, var(--success));
+        }
+
+        .legend {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            font-size: 0.82rem;
+            color: var(--text-muted);
+        }
+
+        .record {
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            background: #fcfdff;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+        }
+
+        .record-top,
+        .record-actions {
+            display: flex;
+            justify-content: space-between;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            align-items: flex-start;
+        }
+
+        .record-meta {
+            color: var(--text-muted);
+            font-size: 0.88rem;
+        }
+
+        .note {
+            font-size: 0.88rem;
+            color: var(--text-muted);
+            background: rgba(29, 78, 216, 0.05);
+            border-left: 3px solid rgba(29, 78, 216, 0.22);
+            border-radius: 0.5rem;
+            padding: 0.7rem 0.85rem;
+        }
+
+        .status {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.32rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            border: 1px solid transparent;
+        }
+
+        .resource-wrap {
+            display: flex;
+            gap: 0.45rem;
+            flex-wrap: wrap;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.55);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .modal-card {
+            width: min(560px, 96vw);
+            max-height: 92vh;
+            overflow: auto;
+        }
+
+        .danger {
+            background: rgba(220, 38, 38, 0.1);
+            color: var(--error);
+            border: 1px solid rgba(220, 38, 38, 0.18);
+        }
+
+        .muted {
+            background: rgba(100, 116, 139, 0.12);
+            color: #475569;
+            border: 1px solid rgba(100, 116, 139, 0.18);
+        }
+
+        .tab-btn.active {
+            background: rgba(255,255,255,0.2) !important;
+            border-color: white !important;
+            font-weight: 700;
+        }
+
+        .admin-section {
+            display: none;
+        }
+
+        .admin-section.active {
+            display: flex;
+        }
+
+        @media (max-width: 768px) {
+            .shell {
+                padding: 1rem;
+            }
+
+            .trend-row {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body onload="bootstrapAdmin()">
+    <div id="notification" class="notification"></div>
+
+    <nav class="glass-card" style="margin: 1rem; padding: 1rem 2rem; border-radius: 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <img src="../assets/kkw_logo.png" alt="KKW Logo" style="height: 30px; width: auto;">
+            <h2 style="color: white; font-family: Poppins, sans-serif; font-size: 1.4rem; margin: 0;">KKWIEER</h2>
+        </div>
+        <div style="display: flex; gap: 1.4rem; align-items: center; flex-wrap: wrap;">
+            <a href="dashboard.html" style="color: rgba(255,255,255,0.82); text-decoration: none;">Dashboard</a>
+            <a href="bookings.html" style="color: rgba(255,255,255,0.82); text-decoration: none;">My Bookings</a>
+            <a href="events.html" style="color: rgba(255,255,255,0.82); text-decoration: none;">Events</a>
+            <a href="admin.html" style="color: white; text-decoration: none; font-weight: 700;">Admin Panel</a>
+            <a href="#" onclick="logout()" style="color: rgba(255,200,200,0.92); text-decoration: none;"><i class="fas fa-sign-out-alt"></i></a>
+        </div>
+    </nav>
+
+    <main class="shell">
+        <section class="grid-2">
+            <div class="glass-card hero">
+                <div class="header-line" style="align-items: flex-start;">
+                    <div>
+                        <p style="opacity: 0.88; margin-bottom: 0.45rem;">Admin control room</p>
+                        <h1 style="margin-bottom: 0.65rem;">Approvals, hall locks, and availability in one place.</h1>
+                        <p style="max-width: 640px; opacity: 0.92;">Approve requests, free booked halls before the deadline, and review hall usage without mixing live locks with old history.</p>
+                    </div>
+                    <button class="btn" type="button" onclick="loadAdminData(true)" style="background: white; color: var(--primary);">
+                        <i class="fas fa-rotate-right"></i> Refresh
+                    </button>
+                </div>
+                <div class="toolbar" id="admin-tabs" style="margin-top: 1.1rem; justify-content: flex-start;">
+                    <button class="btn btn-outline tab-btn active" type="button" data-section="overview-section" onclick="switchTab('overview-section', this)" style="color: white; border-color: rgba(255,255,255,0.52);">
+                        <i class="fas fa-chart-column"></i> Overview
+                    </button>
+                    <button class="btn btn-outline tab-btn" type="button" data-section="operations-section" onclick="switchTab('operations-section', this)" style="color: white; border-color: rgba(255,255,255,0.52);">
+                        <i class="fas fa-list-check"></i> Approve Bookings / Release Halls
+                    </button>
+                    <button class="btn btn-outline tab-btn" type="button" data-section="halls-section" onclick="switchTab('halls-section', this)" style="color: white; border-color: rgba(255,255,255,0.52);">
+                        <i class="fas fa-building"></i> View All Halls
+                    </button>
+                </div>
+            </div>
+
+            <div class="glass-card stack">
+                <div class="header-line">
+                    <div>
+                        <h3>Live admin notes</h3>
+                        <p class="subtle">Quick reminders for daily approval work.</p>
+                    </div>
+                    <span class="chip" id="overview-last-updated">Waiting for data</span>
+                </div>
+                <div class="note">Approved bookings immediately mark a hall as booked.</div>
+                <div class="note">Use Release Hall any time an admin wants to make a booked hall available early.</div>
+                <div class="note">Once the approved end time passes, the hall becomes available automatically on refresh.</div>
+            </div>
+        </section>
+
+        <section id="overview-section" class="glass-card stack admin-section active">
+            <div class="header-line">
+                <div>
+                    <h2>Overview</h2>
+                    <p class="subtle">Platform counts, approval quality, and the current occupancy picture.</p>
+                </div>
+                <div class="toolbar">
+                    <span class="chip" id="active-locks-count"><i class="fas fa-lock"></i> 0 live locks</span>
+                    <span class="chip"><i class="fas fa-clock"></i> Auto refresh every 60 seconds</span>
+                </div>
+            </div>
+
+            <div class="grid-2" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
+                <div class="metric"><small>Total booking requests</small><strong id="stat-total-platform">0</strong><span class="subtle">All requests in the system.</span></div>
+                <div class="metric"><small>Halls booked now</small><strong id="stat-active-booked">0</strong><span class="subtle">Active approved locks.</span></div>
+                <div class="metric"><small>Pending approvals</small><strong id="stat-pending-count">0</strong><span class="subtle">Still waiting for action.</span></div>
+                <div class="metric"><small>Approved in history</small><strong id="stat-historical-approved">0</strong><span class="subtle">Approved, completed, or released.</span></div>
+                <div class="metric"><small>Approval rate</small><strong id="stat-approval-rate">0%</strong><span class="subtle">Approval history over total requests.</span></div>
+                <div class="metric"><small>Most used hall</small><strong id="stat-most-used">N/A</strong><span class="subtle">Most frequent approved venue.</span></div>
+            </div>
+
+            <div class="grid-2">
+                <div class="glass-card stack" style="padding: 1.25rem;">
+                    <div>
+                        <h3>7 day request trend</h3>
+                        <p class="subtle">Total requests versus approval history per day.</p>
+                    </div>
+                    <div class="legend">
+                        <span><i class="fas fa-square" style="color: var(--primary);"></i> Total requests</span>
+                        <span><i class="fas fa-square" style="color: var(--success);"></i> Approved history</span>
+                    </div>
+                    <div id="trends-chart" class="stack"></div>
+                </div>
+
+                <div class="glass-card stack" style="padding: 1.25rem;">
+                    <div class="header-line">
+                        <div>
+                            <h3>Live hall locks</h3>
+                            <p class="subtle">Approved bookings still blocking a hall.</p>
+                        </div>
+                        <span class="chip" id="overview-peak-times">Peak: N/A</span>
+                    </div>
+                    <div id="active-locks-list" class="stack"></div>
+                </div>
+            </div>
+        </section>
+
+        <section id="operations-section" class="glass-card stack admin-section">
+            <div class="header-line">
+                <div>
+                    <h2>Operations</h2>
+                    <p class="subtle">Approve requests, release locks, and inspect old records.</p>
+                </div>
+                <div class="toolbar">
+                    <input type="text" id="booking-search" placeholder="Search event, hall, organizer, club, or department" style="width: min(360px, 100%); margin: 0;">
+                    <select id="booking-status-filter" style="width: 180px; margin: 0;">
+                        <option value="All">All statuses</option>
+                        <option value="Pending">Pending</option>
+                        <option value="Approved">Approved</option>
+                        <option value="Completed">Completed</option>
+                        <option value="Released">Released</option>
+                        <option value="Rejected">Rejected</option>
+                        <option value="Cancelled">Cancelled</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="toolbar" style="justify-content: flex-start;">
+                <span class="chip" id="ops-summary-total"><i class="fas fa-layer-group"></i> 0 total</span>
+                <span class="chip" id="ops-summary-pending"><i class="fas fa-hourglass-half"></i> 0 pending</span>
+                <span class="chip" id="ops-summary-approved"><i class="fas fa-lock"></i> 0 active locks</span>
+                <span class="chip" id="ops-summary-history"><i class="fas fa-clock-rotate-left"></i> 0 in history</span>
+            </div>
+
+            <div class="grid-3">
+                <div class="glass-card stack" style="padding: 1.2rem;">
+                    <div class="header-line">
+                        <div>
+                            <h3>Pending queue</h3>
+                            <p class="subtle">Requests waiting for approval or rejection.</p>
+                        </div>
+                        <span class="chip" id="pending-queue-count">0</span>
+                    </div>
+                    <div id="pending-requests-list" class="stack"></div>
+                </div>
+
+                <div class="glass-card stack" style="padding: 1.2rem;">
+                    <div class="header-line">
+                        <div>
+                            <h3>Approved hall locks</h3>
+                            <p class="subtle">Halls currently marked as booked.</p>
+                        </div>
+                        <span class="chip" id="approved-locks-count">0</span>
+                    </div>
+                    <div id="approved-locks-list" class="stack"></div>
+                </div>
+
+                <div class="glass-card stack" style="padding: 1.2rem;">
+                    <div class="header-line">
+                        <div>
+                            <h3>Booking history</h3>
+                            <p class="subtle">Completed, released, rejected, or cancelled items.</p>
+                        </div>
+                        <span class="chip" id="history-count">0</span>
+                    </div>
+                    <div id="booking-history-list" class="stack"></div>
+                </div>
+            </div>
+        </section>
+
+        <section id="halls-section" class="glass-card stack admin-section">
+            <div class="header-line">
+                <div>
+                    <h2>Hall control</h2>
+                    <p class="subtle">Manage halls and see exactly which hall is booked or available.</p>
+                </div>
+                <div class="toolbar">
+                    <input type="text" id="hall-admin-search" placeholder="Search hall name, location, or resource" style="width: min(300px, 100%); margin: 0;">
+                    <button class="btn btn-primary" type="button" onclick="openAddHallModal()">
+                        <i class="fas fa-plus"></i> Add Hall
+                    </button>
+                </div>
+            </div>
+
+            <div class="toolbar" style="justify-content: flex-start;">
+                <span class="chip" id="hall-summary-total"><i class="fas fa-building"></i> 0 halls</span>
+                <span class="chip" id="hall-summary-available"><i class="fas fa-circle-check"></i> 0 available</span>
+                <span class="chip" id="hall-summary-booked"><i class="fas fa-lock"></i> 0 booked</span>
+            </div>
+
+            <div id="admin-halls-grid" class="grid-halls"></div>
+        </section>
+    </main>
+
+    <div id="add-hall-overlay" class="modal-overlay" onclick="if(event.target === this) closeAddHallModal()">
+        <div class="glass-card modal-card">
+            <div class="header-line">
+                <div>
+                    <h3>Add hall</h3>
+                    <p class="subtle">Create a new hall entry for the booking panel.</p>
+                </div>
+                <button class="btn btn-outline btn-sm" type="button" onclick="closeAddHallModal()"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="add-hall-form">
+                <label for="hall-name">Hall Name</label>
+                <input type="text" id="hall-name" required>
+                <label for="hall-location">Location</label>
+                <input type="text" id="hall-location" required>
+                <label for="hall-capacity">Capacity</label>
+                <input type="number" id="hall-capacity" min="1" required>
+                <label for="hall-resources">Resources</label>
+                <textarea id="hall-resources" rows="3" placeholder="Projector, Sound System, AC" required></textarea>
+                <button class="btn btn-primary" type="submit" style="width: 100%;">Create Hall</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="edit-hall-overlay" class="modal-overlay" onclick="if(event.target === this) closeEditHallModal()">
+        <div class="glass-card modal-card">
+            <div class="header-line">
+                <div>
+                    <h3>Edit hall</h3>
+                    <p class="subtle">Update details without changing history.</p>
+                </div>
+                <button class="btn btn-outline btn-sm" type="button" onclick="closeEditHallModal()"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="edit-hall-form">
+                <input type="hidden" id="edit-hall-id">
+                <label for="edit-hall-name">Hall Name</label>
+                <input type="text" id="edit-hall-name" required>
+                <label for="edit-hall-location">Location</label>
+                <input type="text" id="edit-hall-location" required>
+                <label for="edit-hall-capacity">Capacity</label>
+                <input type="number" id="edit-hall-capacity" min="1" required>
+                <label for="edit-hall-resources">Resources</label>
+                <textarea id="edit-hall-resources" rows="3" required></textarea>
+                <button class="btn btn-primary" type="submit" style="width: 100%;">Save Changes</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="../js/api.js"></script>
+    <script>
+        const state = {
+            stats: null,
+            bookings: [],
+            halls: [],
+            refreshHandle: null
+        };
+        const ADMIN_SECTION_KEY = 'chrs.activeAdminSection';
+        const ADMIN_SECTION_IDS = ['overview-section', 'operations-section', 'halls-section'];
+
+        function bootstrapAdmin() {
+            checkAuth();
+            guardAdmin();
+            bindEvents();
+            restoreActiveTab();
+            loadAdminData();
+            state.refreshHandle = window.setInterval(() => loadAdminData(false), 60000);
+        }
+
+        function guardAdmin() {
+            const user = JSON.parse(localStorage.getItem('user') || 'null');
+            if (!user || user.role !== 'admin') {
+                window.location.href = user ? 'dashboard.html' : '../index.html';
+            }
+        }
+
+        function bindEvents() {
+            document.getElementById('booking-search').addEventListener('input', renderOperations);
+            document.getElementById('booking-status-filter').addEventListener('change', renderOperations);
+            document.getElementById('hall-admin-search').addEventListener('input', renderHalls);
+            document.getElementById('add-hall-form').addEventListener('submit', createHall);
+            document.getElementById('edit-hall-form').addEventListener('submit', saveHall);
+        }
+
+        async function loadAdminData(showToast = false) {
+            try {
+                const [stats, bookings, halls] = await Promise.all([
+                    api.bookings.getStats(),
+                    api.bookings.getAll(),
+                    api.halls.getAll()
+                ]);
+
+                state.stats = stats;
+                state.bookings = Array.isArray(bookings) ? bookings : [];
+                state.halls = Array.isArray(halls) ? halls : [];
+
+                renderOverview();
+                renderOperations();
+                renderHalls();
+
+                const stamp = new Date().toLocaleString('en-IN', {
+                    day: '2-digit',
+                    month: 'short',
+                    hour: 'numeric',
+                    minute: '2-digit'
+                });
+                document.getElementById('overview-last-updated').textContent = `Last updated ${stamp}`;
+
+                if (showToast) {
+                    showNotification('Admin panel refreshed.', 'success');
+                }
+            } catch (err) {
+                showNotification(err.message || 'Failed to load admin data.', 'error');
+            }
+        }
+
+        function renderOverview() {
+            const stats = state.stats || {};
+            const active = getActiveBookings();
+
+            document.getElementById('stat-total-platform').textContent = stats.totalBookings || 0;
+            document.getElementById('stat-active-booked').textContent = stats.activeBookedHalls || 0;
+            document.getElementById('stat-pending-count').textContent = stats.pendingBookings || 0;
+            document.getElementById('stat-historical-approved').textContent = stats.approvedBookings || 0;
+            document.getElementById('stat-approval-rate').textContent = `${stats.approvalRate || 0}%`;
+            document.getElementById('stat-most-used').textContent = stats.topHall || 'N/A';
+            document.getElementById('active-locks-count').innerHTML = `<i class="fas fa-lock"></i> ${active.length} live lock${active.length === 1 ? '' : 's'}`;
+            document.getElementById('overview-peak-times').textContent = `Peak: ${(stats.peakTimes || []).join(', ') || 'N/A'}`;
+
+            renderTrends(stats.trends || []);
+            renderActiveLocks(active);
+        }
+
+        function renderTrends(trends) {
+            const container = document.getElementById('trends-chart');
+            if (!trends.length) {
+                container.innerHTML = '<div class="empty">No trend data available yet.</div>';
+                return;
+            }
+
+            const max = Math.max(...trends.map((item) => Math.max(item.count || 0, item.approvedCount || 0)), 1);
+            container.innerHTML = trends.map((item) => `
+                <div class="trend-card">
+                    <div class="trend-row">
+                        <strong>${escapeHtml(item.label || item.date || '-')}</strong>
+                        <div class="bars">
+                            <div class="bar bar-total" style="width:${((item.count || 0) / max) * 100}%;"></div>
+                            <div class="bar bar-approved" style="width:${((item.approvedCount || 0) / max) * 100}%;"></div>
+                        </div>
+                        <span class="subtle" style="text-align:right;">${item.approvedCount || 0}/${item.count || 0}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderActiveLocks(bookings) {
+            const container = document.getElementById('active-locks-list');
+            if (!bookings.length) {
+                container.innerHTML = '<div class="empty">No halls are currently locked by approved bookings.</div>';
+                return;
+            }
+
+            container.innerHTML = bookings.map((booking) => `
+                <div class="record">
+                    <div class="record-top">
+                        <div>
+                            <strong>${escapeHtml(booking.hall?.name || 'Unknown Hall')}</strong>
+                            <div class="record-meta">${escapeHtml(booking.eventName || 'Unnamed Event')}</div>
+                        </div>
+                        ${statusBadge(booking.status)}
+                    </div>
+                    <div class="record-meta">${escapeHtml(participantLine(booking))}<br>Booked till ${escapeHtml(formatBookingWindow(booking))}</div>
+                    <div class="record-actions">
+                        <span class="subtle">${escapeHtml(booking.club || 'Independent')}</span>
+                        <button class="btn btn-outline btn-sm" type="button" onclick="updateStatus('${booking._id}', 'Released')">
+                            <i class="fas fa-unlock"></i> Release Hall
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderOperations() {
+            const filtered = getFilteredBookings();
+            const pending = filtered.filter((booking) => booking.status === 'Pending');
+            const approved = filtered.filter((booking) => booking.status === 'Approved' && isLive(booking));
+            const history = filtered.filter((booking) => booking.status !== 'Pending' && booking.status !== 'Approved');
+
+            document.getElementById('ops-summary-total').innerHTML = `<i class="fas fa-layer-group"></i> ${filtered.length} total`;
+            document.getElementById('ops-summary-pending').innerHTML = `<i class="fas fa-hourglass-half"></i> ${pending.length} pending`;
+            document.getElementById('ops-summary-approved').innerHTML = `<i class="fas fa-lock"></i> ${approved.length} active locks`;
+            document.getElementById('ops-summary-history').innerHTML = `<i class="fas fa-clock-rotate-left"></i> ${history.length} in history`;
+            document.getElementById('pending-queue-count').textContent = pending.length;
+            document.getElementById('approved-locks-count').textContent = approved.length;
+            document.getElementById('history-count').textContent = history.length;
+
+            renderBookingList('pending-requests-list', pending, (booking) => `
+                <button class="btn btn-primary btn-sm" type="button" onclick="updateStatus('${booking._id}', 'Approved')"><i class="fas fa-check"></i> Approve</button>
+                <button class="btn btn-outline btn-sm danger" type="button" onclick="updateStatus('${booking._id}', 'Rejected')"><i class="fas fa-xmark"></i> Reject</button>
+            `, 'No pending booking requests match the current filter.');
+
+            renderBookingList('approved-locks-list', approved, (booking) => `
+                <button class="btn btn-outline btn-sm" type="button" onclick="updateStatus('${booking._id}', 'Released')"><i class="fas fa-unlock"></i> Release Hall</button>
+            `, 'No active hall locks match the current filter.');
+
+            renderBookingList('booking-history-list', history, () => '', 'No historical bookings match the current filter.');
+        }
+
+        function renderBookingList(id, bookings, actionsBuilder, emptyText) {
+            const container = document.getElementById(id);
+            if (!bookings.length) {
+                container.innerHTML = `<div class="empty">${escapeHtml(emptyText)}</div>`;
+                return;
+            }
+
+            container.innerHTML = bookings.map((booking) => `
+                <div class="record">
+                    <div class="record-top">
+                        <div>
+                            <strong>${escapeHtml(booking.eventName || 'Unnamed Event')}</strong>
+                            <div class="record-meta">${escapeHtml(booking.hall?.name || 'Unknown Hall')} - ${escapeHtml(formatBookingWindow(booking))}</div>
+                        </div>
+                        ${statusBadge(booking.status)}
+                    </div>
+                    <div class="record-meta">${escapeHtml(participantLine(booking))}<br>${escapeHtml(booking.club || 'Independent')}${booking.post ? ` - ${escapeHtml(booking.post)}` : ''}<br>Requested ${escapeHtml(formatCreatedAt(booking.createdAt))}</div>
+                    <div class="note">${escapeHtml(booking.purpose || 'No purpose provided.')}</div>
+                    <div class="record-actions">
+                        <span class="subtle">${escapeHtml(describe(booking.status))}</span>
+                        <div class="toolbar">${actionsBuilder(booking)}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderHalls() {
+            const halls = state.halls || [];
+            const filtered = getFilteredHalls();
+            const bookedCount = halls.filter((hall) => Boolean(getCurrentLock(hall._id))).length;
+
+            document.getElementById('hall-summary-total').innerHTML = `<i class="fas fa-building"></i> ${halls.length} halls`;
+            document.getElementById('hall-summary-available').innerHTML = `<i class="fas fa-circle-check"></i> ${halls.length - bookedCount} available`;
+            document.getElementById('hall-summary-booked').innerHTML = `<i class="fas fa-lock"></i> ${bookedCount} booked`;
+
+            const container = document.getElementById('admin-halls-grid');
+            if (!filtered.length) {
+                container.innerHTML = '<div class="empty">No hall matches the current search.</div>';
+                return;
+            }
+
+            container.innerHTML = filtered.map((hall) => {
+                const lock = getCurrentLock(hall._id);
+                const tone = statusTone(lock ? 'Approved' : 'Completed');
+                const hasHistory = state.bookings.some((booking) => booking.hallId === hall._id);
+                const resources = Array.isArray(hall.resources) ? hall.resources : [];
+
+                return `
+                    <div class="glass-card stack" style="padding:1.2rem;">
+                        <div class="record-top">
+                            <div>
+                                <h3 style="margin-bottom:0.35rem;">${escapeHtml(hall.name)}</h3>
+                                <div class="record-meta"><i class="fas fa-location-dot"></i> ${escapeHtml(hall.location || 'Unknown location')}<br><i class="fas fa-users"></i> ${escapeHtml(hall.capacity || 0)} capacity</div>
+                            </div>
+                            <span class="status" style="color:${tone.text}; background:${tone.background}; border-color:${tone.border};">${lock ? 'Booked' : 'Available'}</span>
+                        </div>
+                        <div class="resource-wrap">${resources.map((resource) => `<span class="badge">${escapeHtml(resource)}</span>`).join('')}</div>
+                        <div class="note">${lock ? `${escapeHtml(lock.eventName || 'Reserved Event')}<br>${escapeHtml(participantLine(lock))}<br>Booked till ${escapeHtml(formatBookingWindow(lock))}` : 'No active approved booking is blocking this hall right now.'}</div>
+                        <div class="record-actions">
+                            <div class="toolbar">
+                                ${lock ? `<button class="btn btn-outline btn-sm" type="button" onclick="updateStatus('${lock._id}', 'Released')"><i class="fas fa-unlock"></i> Release Lock</button>` : ''}
+                            </div>
+                            <div class="toolbar">
+                                <button class="btn btn-outline btn-sm" type="button" onclick="openEditHallModal('${hall._id}')"><i class="fas fa-pen"></i> Edit</button>
+                                <button class="btn btn-outline btn-sm ${hasHistory ? 'muted' : 'danger'}" type="button" onclick="deleteHall('${hall._id}')" ${hasHistory ? 'disabled title="Linked booking records exist for this hall."' : ''}><i class="fas fa-trash"></i> Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function getFilteredBookings() {
+            const query = document.getElementById('booking-search').value.trim().toLowerCase();
+            const status = document.getElementById('booking-status-filter').value;
+            return state.bookings.filter((booking) => {
+                const haystack = [
+                    booking.eventName,
+                    booking.hall?.name,
+                    booking.name,
+                    booking.user?.name,
+                    booking.club,
+                    booking.department,
+                    booking.purpose,
+                    booking.status
+                ].join(' ').toLowerCase();
+                return (!query || haystack.includes(query)) && (status === 'All' || booking.status === status);
+            });
+        }
+
+        function getFilteredHalls() {
+            const query = document.getElementById('hall-admin-search').value.trim().toLowerCase();
+            return state.halls.filter((hall) => {
+                if (!query) return true;
+                const haystack = [hall.name, hall.location, ...(Array.isArray(hall.resources) ? hall.resources : [])].join(' ').toLowerCase();
+                return haystack.includes(query);
+            });
+        }
+
+        function getActiveBookings() {
+            return state.bookings
+                .filter((booking) => booking.status === 'Approved' && isLive(booking))
+                .sort((a, b) => getEnd(a) - getEnd(b));
+        }
+
+        function getCurrentLock(hallId) {
+            return getActiveBookings().find((booking) => booking.hallId === hallId) || null;
+        }
+
+        function isLive(booking) {
+            return booking.status === 'Approved' && getEnd(booking) > new Date();
+        }
+
+        function getEnd(booking) {
+            return new Date(`${booking.date}T${booking.endTime}:00`);
+        }
+
+        function formatBookingWindow(booking) {
+            const date = booking.date ? new Date(`${booking.date}T00:00:00`) : null;
+            const dateText = date && !Number.isNaN(date.getTime())
+                ? date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+                : 'Unknown date';
+            return `${dateText} | ${formatTime(booking.startTime)} - ${formatTime(booking.endTime)}`;
+        }
+
+        function formatTime(value) {
+            if (!value || !value.includes(':')) return value || '--';
+            const [hour, minute] = value.split(':').map(Number);
+            const date = new Date();
+            date.setHours(hour, minute, 0, 0);
+            return date.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit' });
+        }
+
+        function participantLine(booking) {
+            return `${booking.name || booking.user?.name || 'Unknown organizer'} | ${booking.year || 'Year not set'} | ${booking.department || 'Department not set'}`;
+        }
+
+        function formatCreatedAt(value) {
+            if (!value) return 'at an unknown time';
+            const date = new Date(value);
+            if (Number.isNaN(date.getTime())) return 'at an unknown time';
+            return date.toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: 'numeric', minute: '2-digit' });
+        }
+
+        function describe(status) {
+            if (status === 'Approved') return 'Hall stays booked until the end time or manual release.';
+            if (status === 'Pending') return 'Waiting for an admin decision.';
+            if (status === 'Released') return 'Hall was made available manually by admin.';
+            if (status === 'Completed') return 'Booking ended and auto closed after the deadline.';
+            if (status === 'Rejected') return 'Request was declined by admin.';
+            if (status === 'Cancelled') return 'Booking was cancelled before completion.';
+            return 'Historical booking record.';
+        }
+
+        function statusTone(status) {
+            if (status === 'Approved') return { text: 'var(--success)', background: 'rgba(22, 163, 74, 0.12)', border: 'rgba(22, 163, 74, 0.24)' };
+            if (status === 'Pending') return { text: 'var(--warning)', background: 'rgba(217, 119, 6, 0.12)', border: 'rgba(217, 119, 6, 0.24)' };
+            if (status === 'Completed') return { text: '#2563eb', background: 'rgba(37, 99, 235, 0.12)', border: 'rgba(37, 99, 235, 0.24)' };
+            if (status === 'Released') return { text: '#64748b', background: 'rgba(100, 116, 139, 0.14)', border: 'rgba(100, 116, 139, 0.24)' };
+            return { text: 'var(--error)', background: 'rgba(220, 38, 38, 0.12)', border: 'rgba(220, 38, 38, 0.24)' };
+        }
+
+        function statusBadge(status) {
+            const tone = statusTone(status);
+            return `<span class="status" style="color:${tone.text}; background:${tone.background}; border-color:${tone.border};">${escapeHtml(status || 'Unknown')}</span>`;
+        }
+
+        async function updateStatus(id, status) {
+            const label = status === 'Released' ? 'release this hall lock' : `${status.toLowerCase()} this booking`;
+            if (!window.confirm(`Do you want to ${label}?`)) return;
+            try {
+                await api.bookings.updateStatus(id, status);
+                showNotification(`Booking marked as ${status}.`, 'success');
+                await loadAdminData();
+            } catch (err) {
+                showNotification(err.message || 'Failed to update booking status.', 'error');
+            }
+        }
+
+        function openAddHallModal() {
+            document.getElementById('add-hall-form').reset();
+            document.getElementById('add-hall-overlay').style.display = 'flex';
+        }
+
+        function closeAddHallModal() {
+            document.getElementById('add-hall-overlay').style.display = 'none';
+        }
+
+        function openEditHallModal(id) {
+            const hall = state.halls.find((item) => item._id === id);
+            if (!hall) {
+                showNotification('Hall not found.', 'error');
+                return;
+            }
+            document.getElementById('edit-hall-id').value = hall._id;
+            document.getElementById('edit-hall-name').value = hall.name || '';
+            document.getElementById('edit-hall-location').value = hall.location || '';
+            document.getElementById('edit-hall-capacity').value = hall.capacity || 0;
+            document.getElementById('edit-hall-resources').value = (hall.resources || []).join(', ');
+            document.getElementById('edit-hall-overlay').style.display = 'flex';
+        }
+
+        function closeEditHallModal() {
+            document.getElementById('edit-hall-overlay').style.display = 'none';
+        }
+
+        async function createHall(event) {
+            event.preventDefault();
+            const payload = {
+                name: document.getElementById('hall-name').value.trim(),
+                location: document.getElementById('hall-location').value.trim(),
+                capacity: Number(document.getElementById('hall-capacity').value),
+                resources: normalizeResources(document.getElementById('hall-resources').value)
+            };
+            try {
+                await api.halls.create(payload);
+                closeAddHallModal();
+                showNotification('Hall created successfully.', 'success');
+                await loadAdminData();
+            } catch (err) {
+                showNotification(err.message || 'Failed to create hall.', 'error');
+            }
+        }
+
+        async function saveHall(event) {
+            event.preventDefault();
+            const id = document.getElementById('edit-hall-id').value;
+            const payload = {
+                name: document.getElementById('edit-hall-name').value.trim(),
+                location: document.getElementById('edit-hall-location').value.trim(),
+                capacity: Number(document.getElementById('edit-hall-capacity').value),
+                resources: normalizeResources(document.getElementById('edit-hall-resources').value)
+            };
+            try {
+                await api.halls.update(id, payload);
+                closeEditHallModal();
+                showNotification('Hall updated successfully.', 'success');
+                await loadAdminData();
+            } catch (err) {
+                showNotification(err.message || 'Failed to update hall.', 'error');
+            }
+        }
+
+        async function deleteHall(id) {
+            if (state.bookings.some((booking) => booking.hallId === id)) {
+                showNotification('This hall has booking records. Keep it to avoid breaking existing data.', 'error');
+                return;
+            }
+            if (!window.confirm('Delete this hall from the system?')) return;
+            try {
+                await api.halls.delete(id);
+                showNotification('Hall deleted successfully.', 'success');
+                await loadAdminData();
+            } catch (err) {
+                showNotification(err.message || 'Failed to delete hall.', 'error');
+            }
+        }
+
+        function normalizeResources(value) {
+            return value.split(',').map((item) => item.trim()).filter(Boolean);
+        }
+
+        function getPreferredAdminSection() {
+            const hashSection = window.location.hash.replace('#', '');
+            if (ADMIN_SECTION_IDS.includes(hashSection)) {
+                return hashSection;
+            }
+
+            const savedSection = sessionStorage.getItem(ADMIN_SECTION_KEY);
+            if (ADMIN_SECTION_IDS.includes(savedSection)) {
+                return savedSection;
+            }
+
+            return 'overview-section';
+        }
+
+        function restoreActiveTab() {
+            switchTab(getPreferredAdminSection());
+        }
+
+        function switchTab(sectionId, btnElem) {
+            if (!ADMIN_SECTION_IDS.includes(sectionId)) {
+                return;
+            }
+
+            document.querySelectorAll('.admin-section').forEach(sec => sec.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            
+            const target = document.getElementById(sectionId);
+            const targetButton = btnElem || document.querySelector(`.tab-btn[data-section="${sectionId}"]`);
+
+            if (target) target.classList.add('active');
+            if (targetButton) targetButton.classList.add('active');
+
+            sessionStorage.setItem(ADMIN_SECTION_KEY, sectionId);
+            if (window.location.hash !== `#${sectionId}`) {
+                window.history.replaceState(null, '', `#${sectionId}`);
+            }
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function logout() {
+            if (state.refreshHandle) {
+                window.clearInterval(state.refreshHandle);
+            }
+            localStorage.clear();
+            window.location.href = '../index.html';
+        }
+
+        window.addEventListener('beforeunload', () => {
+            if (state.refreshHandle) {
+                window.clearInterval(state.refreshHandle);
+            }
+        });
+
+        window.addEventListener('hashchange', restoreActiveTab);
+    </script>
+</body>
+</html>

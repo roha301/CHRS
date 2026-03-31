@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KKWIEER College Hall Reservation</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div id="notification" class="notification"></div>
+
+    <div class="auth-container">
+        <div class="auth-header animate-fade">
+            <div style="display: flex; align-items: center; justify-content: center; gap: 10px;">
+                <img src="assets/kkw_logo.png" alt="KKW Logo" style="height: 40px; width: auto;">
+                <h1 style="margin: 0;">KKWIEER</h1>
+            </div>
+            <p>College Hall Reservation</p>
+        </div>
+
+        <div class="glass-card animate-fade">
+            <div class="nav-tabs">
+                <div id="login-tab" class="nav-tab active" onclick="switchAuthTab('login')">Login</div>
+                <div id="register-tab" class="nav-tab" onclick="switchAuthTab('register')">Register</div>
+            </div>
+
+            <form id="login-form" autocomplete="off">
+                <label for="login-role">Login As</label>
+                <select id="login-role" autocomplete="off">
+                    <option value="user">Student</option>
+                    <option value="admin">Administrator</option>
+                </select>
+
+                <label for="login-email">College Email or Username</label>
+                <input type="text" id="login-email" placeholder="Enter your email or username" autocomplete="off" autocapitalize="none" spellcheck="false" required>
+
+                <label for="login-password">Password</label>
+                <div class="password-container">
+                    <input type="password" id="login-password" placeholder="Password" autocomplete="new-password" required>
+                    <span class="toggle-password" onclick="togglePassword('login-password', this)">Show</span>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Sign In</button>
+            </form>
+
+            <div id="admin-hint" style="display: none; margin-top: 1rem; padding: 0.75rem; background: rgba(29, 78, 216, 0.1); border-left: 3px solid var(--primary); border-radius: 4px; font-size: 0.85rem; color: var(--text-muted); text-align: center;">
+                <i class="fas fa-info-circle" style="color: var(--primary); margin-right: 0.25rem;"></i> <strong>Default Admin Credentials:</strong><br>
+                <span>Email/Username: <code style="background: rgba(0,0,0,0.1); padding: 0.1rem 0.3rem; border-radius: 3px;">CHRS21</code></span> | 
+                <span>Password: <code style="background: rgba(0,0,0,0.1); padding: 0.1rem 0.3rem; border-radius: 3px;">KKWIEER</code></span>
+            </div>
+
+            <form id="register-form" style="display: none;" autocomplete="off">
+                <label for="reg-role">Register As</label>
+                <select id="reg-role" onchange="toggleCrnField()">
+                    <option value="user">Student</option>
+                    <option value="admin">Administrator</option>
+                </select>
+
+                <label for="reg-name">Full Name</label>
+                <input type="text" id="reg-name" placeholder="John Doe" required>
+
+                <div id="crn-container">
+                    <label for="reg-crn">CRN Number</label>
+                    <input type="text" id="reg-crn" placeholder="e.g. 123456">
+                </div>
+
+                <label for="reg-email">College Email</label>
+                <input type="email" id="reg-email" placeholder="name@kkwagh.edu.in" required>
+
+                <label for="reg-password">Password</label>
+                <div class="password-container">
+                    <input type="password" id="reg-password" placeholder="Password" autocomplete="new-password" required>
+                    <span class="toggle-password" onclick="togglePassword('reg-password', this)">Show</span>
+                </div>
+
+                <label for="reg-confirm-password">Confirm Password</label>
+                <div class="password-container">
+                    <input type="password" id="reg-confirm-password" placeholder="Confirm password" autocomplete="new-password" required>
+                    <span class="toggle-password" onclick="togglePassword('reg-confirm-password', this)">Show</span>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Create Account</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script>
+        function switchAuthTab(tab) {
+            document.getElementById('login-tab').classList.toggle('active', tab === 'login');
+            document.getElementById('register-tab').classList.toggle('active', tab === 'register');
+            document.getElementById('login-form').style.display = tab === 'login' ? 'block' : 'none';
+            document.getElementById('register-form').style.display = tab === 'register' ? 'block' : 'none';
+        }
+
+        function toggleCrnField() {
+            const role = document.getElementById('reg-role').value;
+            const crnContainer = document.getElementById('crn-container');
+            crnContainer.style.display = role === 'user' ? 'block' : 'none';
+        }
+
+        function togglePassword(inputId, toggle) {
+            const input = document.getElementById(inputId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                toggle.textContent = 'Hide';
+            } else {
+                input.type = 'password';
+                toggle.textContent = 'Show';
+            }
+        }
+
+        function clearLoginFields() {
+            document.getElementById('login-role').value = 'user';
+            document.getElementById('login-email').value = '';
+            document.getElementById('login-password').value = '';
+            toggleAdminHint();
+        }
+
+        function toggleAdminHint() {
+            const role = document.getElementById('login-role').value;
+            document.getElementById('admin-hint').style.display = role === 'admin' ? 'block' : 'none';
+        }
+
+        document.getElementById('login-role').addEventListener('change', toggleAdminHint);
+
+        function initAuthPage() {
+            clearLoginFields();
+            toggleCrnField();
+
+            // Some browsers/password managers restore credentials after initial paint.
+            window.setTimeout(clearLoginFields, 50);
+        }
+
+        document.getElementById('login-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            const role = document.getElementById('login-role').value;
+
+            if (role === 'user' && !email.endsWith('@kkwagh.edu.in')) {
+                showNotification('Students must use @kkwagh.edu.in email domain.', 'error');
+                return;
+            }
+
+            try {
+                const data = await api.auth.login({ email, password, role });
+                localStorage.setItem('token', data.token);
+                localStorage.setItem('user', JSON.stringify(data.user));
+                showNotification('Login successful!', 'success');
+                setTimeout(() => {
+                    window.location.href = data.user.role === 'admin' ? '/pages/admin.html' : '/pages/dashboard.html';
+                }, 1000);
+            } catch (err) {
+                showNotification(err.message, 'error');
+            }
+        };
+
+        document.getElementById('register-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('reg-name').value;
+            const email = document.getElementById('reg-email').value;
+            const password = document.getElementById('reg-password').value;
+            const confirmPassword = document.getElementById('reg-confirm-password').value;
+            const role = document.getElementById('reg-role').value;
+            const crn = document.getElementById('reg-crn').value;
+
+            if (role === 'user' && !email.endsWith('@kkwagh.edu.in')) {
+                showNotification('Students must use @kkwagh.edu.in email domain.', 'error');
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                showNotification('Passwords do not match.', 'error');
+                return;
+            }
+
+            try {
+                await api.auth.register({ name, crn, email, password, role });
+                showNotification('Account created! Please login.', 'success');
+                switchAuthTab('login');
+            } catch (err) {
+                showNotification(err.message, 'error');
+            }
+        };
+
+        window.addEventListener('DOMContentLoaded', initAuthPage);
+        window.addEventListener('pageshow', clearLoginFields);
+    </script>
+</body>
+</html>

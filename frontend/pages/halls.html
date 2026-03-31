@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KKWIEER - Reserve Hall</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body onload="checkAuth(); loadHalls()">
+    <div id="notification" class="notification"></div>
+
+    <nav class="glass-card" style="margin: 1rem; padding: 1rem 2rem; border-radius: 1rem; display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <img src="../assets/kkw_logo.png" alt="KKW Logo" style="height: 30px; width: auto;">
+            <h2 style="color: white; font-family: Poppins, sans-serif; font-size: 1.4rem; margin: 0;">KKWIEER</h2>
+        </div>
+        <div style="display: flex; gap: 2rem; align-items: center;">
+            <a href="dashboard.html" style="color: rgba(255,255,255,0.8); text-decoration: none;">Dashboard</a>
+            <a href="halls.html" style="color: white; text-decoration: none; font-weight: 600;">Reserve Hall</a>
+            <a href="bookings.html" style="color: rgba(255,255,255,0.8); text-decoration: none;">My Bookings</a>
+            <a href="events.html" style="color: rgba(255,255,255,0.8); text-decoration: none;">Events</a>
+            <a href="#" onclick="localStorage.clear(); window.location.href='../index.html'" style="color: rgba(255,200,200,0.9); text-decoration: none;"><i class="fas fa-sign-out-alt"></i></a>
+        </div>
+    </nav>
+
+    <main style="padding: 2rem;">
+        <div style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+            <div>
+                <h1>Explore Halls</h1>
+                <p style="color: var(--text-muted)">Find the perfect venue for your event.</p>
+            </div>
+            <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+                <div style="position: relative;">
+                    <i class="fas fa-search" style="position: absolute; left: 0.8rem; top: 50%; transform: translateY(-50%); color: var(--text-light); font-size: 0.85rem;"></i>
+                    <input type="text" id="hall-search" placeholder="Search halls..." style="width: 220px; margin: 0; padding-left: 2.2rem; font-size: 0.875rem;" oninput="filterHalls(this.value)">
+                </div>
+                <button class="btn btn-primary" onclick="toggleRecommendationModal()"><i class="fas fa-magic"></i> Smart Recommend</button>
+            </div>
+        </div>
+
+        <!-- Recommendation Modal -->
+        <div id="recommend-modal" class="glass-card" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1001; width: 90%; max-width: 500px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 1.5rem;">
+                <h3>Smart Recommendation</h3>
+                <i class="fas fa-times" style="cursor: pointer;" onclick="toggleRecommendationModal()"></i>
+            </div>
+            <label>Expected Capacity</label>
+            <input type="number" id="rec-capacity" placeholder="e.g. 100">
+            <label>Required Resources (comma separated)</label>
+            <input type="text" id="rec-resources" placeholder="e.g. AC, Projector">
+            <button class="btn btn-primary" style="width: 100%;" onclick="getRecommendations()">Get Best Halls</button>
+            <div id="rec-results" style="margin-top: 1.5rem;"></div>
+        </div>
+        <div id="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000;" onclick="toggleRecommendationModal()"></div>
+
+        <!-- Global Calendar -->
+        <div class="glass-card animate-fade" style="margin-bottom: 2.5rem;">
+            <h3 style="margin-bottom: 0.5rem;"><i class="fas fa-calendar-alt" style="color: var(--primary);"></i> Global Availability Calendar</h3>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">Hover over booked dates to view locked event slots.</p>
+            <div id="global-calendar" style="margin-top: 1rem;"></div>
+        </div>
+
+        <!-- Halls Grid -->
+        <div id="halls-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 2rem;">
+            <!-- Loading state -->
+            <p>Loading halls...</p>
+        </div>
+
+        <!-- Booking Modal -->
+        <div id="booking-modal" class="glass-card" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1001; width: 90%; max-width: 500px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 1.5rem;">
+                <h3 id="booking-hall-name">Book Hall</h3>
+                <i class="fas fa-times" style="cursor: pointer;" onclick="toggleBookingModal()"></i>
+            </div>
+            <form id="booking-form">
+                <input type="hidden" id="booking-hall-id">
+                
+                <div style="display: flex; gap: 1rem;">
+                    <div style="flex: 1;">
+                        <label>Your Name</label>
+                        <input type="text" id="book-name" required>
+                    </div>
+                    <div style="flex: 1;">
+                        <label>Year</label>
+                        <input type="text" id="book-year" placeholder="e.g. 3rd Year" required>
+                    </div>
+                </div>
+
+                <label>Department</label>
+                <input type="text" id="book-department" required>
+
+                <div style="display: flex; gap: 1rem;">
+                    <div style="flex: 1;">
+                        <label>Club Relation</label>
+                        <select id="book-club" onchange="document.getElementById('club-other-container').style.display = this.value === 'Other' ? 'block' : 'none';" required>
+                            <option value="None">None</option>
+                            <option value="Desoc">Desoc</option>
+                            <option value="CSI">CSI</option>
+                            <option value="TEDx">TEDx</option>
+                            <option value="Debuggers Club">Debuggers Club</option>
+                            <option value="Other">Other (Mention)</option>
+                        </select>
+                    </div>
+                    <div style="flex: 1;">
+                        <label>Post in Club</label>
+                        <input type="text" id="book-post" placeholder="e.g. Member, Head">
+                    </div>
+                </div>
+
+                <div id="club-other-container" style="display: none;">
+                    <label>Other Club Name</label>
+                    <input type="text" id="book-club-other">
+                </div>
+
+                <label>Event Name</label>
+                <input type="text" id="book-event-name" required>
+                <label>Date</label>
+                <input type="date" id="book-date" required>
+                <div style="display: flex; gap: 1rem;">
+                    <div style="flex: 1;">
+                        <label>Start Time</label>
+                        <input type="time" id="book-start" required>
+                    </div>
+                    <div style="flex: 1;">
+                        <label>End Time</label>
+                        <input type="time" id="book-end" required>
+                    </div>
+                </div>
+                <label>Purpose</label>
+                <textarea id="book-purpose" rows="3" placeholder="Describe your event..." required></textarea>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Confirm Request</button>
+            </form>
+        </div>
+    </main>
+
+    <script src="../js/api.js"></script>
+    <script src="../js/calendar.js"></script>
+    <script>
+        let allHalls = [];
+        let globalEventsMemo = []; // Store events natively
+
+        function parseBookingStart(booking) {
+            return new Date(`${booking.date}T${booking.startTime}:00`);
+        }
+
+        function parseBookingEnd(booking) {
+            return new Date(`${booking.date}T${booking.endTime}:00`);
+        }
+
+        function formatBookingWindow(booking) {
+            const start = parseBookingStart(booking);
+            const end = parseBookingEnd(booking);
+            const dateText = start.toLocaleDateString('en-IN', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric'
+            });
+            const startText = start.toLocaleTimeString('en-IN', {
+                hour: 'numeric',
+                minute: '2-digit'
+            });
+            const endText = end.toLocaleTimeString('en-IN', {
+                hour: 'numeric',
+                minute: '2-digit'
+            });
+            return `${dateText}, ${startText} - ${endText}`;
+        }
+
+        function getNextApprovedBooking(hall) {
+            const now = new Date();
+            const bookings = globalEventsMemo
+                .filter((b) => b.hallId === hall._id || b.hallName === hall.name)
+                .filter((b) => parseBookingEnd(b) > now)
+                .sort((a, b) => parseBookingStart(a) - parseBookingStart(b));
+
+            return bookings[0] || null;
+        }
+
+        function isHallBooked(hallId) {
+            const hall = allHalls.find((item) => item._id === hallId);
+            if (!hall) return false;
+            return Boolean(getNextApprovedBooking(hall));
+        }
+
+        async function loadHalls() {
+            try {
+                // Load global calendar data natively
+                globalEventsMemo = await api.bookings.getApproved();
+                renderCalendar(globalEventsMemo, 'global-calendar');
+
+                allHalls = await api.halls.getAll();
+                renderHalls(allHalls);
+            } catch (err) {
+                showNotification(err.message, 'error');
+            }
+        }
+
+        function renderHalls(halls) {
+            const container = document.getElementById('halls-grid');
+            if(halls.length === 0) {
+                container.innerHTML = `<p style="text-align: center; color: var(--text-muted); width: 100%;">No halls available.</p>`;
+                return;
+            }
+
+            container.innerHTML = halls.map(h => {
+                const nextApprovedBooking = getNextApprovedBooking(h);
+                const isBooked = Boolean(nextApprovedBooking);
+
+                // Build event details block if booked
+                let eventInfoHtml = '';
+                if (isBooked) {
+                    eventInfoHtml = `
+                        <div style="background: rgba(255,68,68,0.08); border-left: 3px solid #ff4444; padding: 0.6rem 0.8rem; border-radius: 4px; margin-bottom: 0.5rem; font-size: 0.82rem;">
+                            <div style="font-weight: bold; color: #ff6666; margin-bottom: 0.2rem;">
+                                <i class="fas fa-lock" style="margin-right: 0.3rem;"></i>${nextApprovedBooking.eventName || 'Reserved Event'}
+                            </div>
+                            ${nextApprovedBooking.club && nextApprovedBooking.club !== 'None' ? `<div style="color: var(--text-muted);">Organized by: <strong>${nextApprovedBooking.club}</strong></div>` : ''}
+                            <div style="color: var(--text-muted);">Booked till ${formatBookingWindow(nextApprovedBooking)}</div>
+                        </div>
+                    `;
+                }
+
+                return `
+                <div class="glass-card animate-fade" style="display: flex; flex-direction: column;">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
+                        <h3 style="margin: 0; color: var(--primary);">${h.name}</h3>
+                        ${isBooked
+                            ? '<span style="font-size: 0.7rem; font-weight: bold; padding: 0.2rem 0.6rem; background: rgba(255,68,68,0.15); color: #ff4444; border-radius: 4px; flex-shrink: 0;">&#128274; Hall Booked</span>'
+                            : '<span style="font-size: 0.7rem; font-weight: bold; padding: 0.2rem 0.6rem; background: rgba(0,200,100,0.12); color: #00c853; border-radius: 4px; flex-shrink: 0;">&#10003; Available</span>'}
+                    </div>
+                    <p style="color: var(--text-muted); margin-bottom: 0.75rem; font-size: 0.9rem;"><i class="fas fa-map-marker-alt"></i> ${h.location}</p>
+                    ${eventInfoHtml}
+                    <div style="margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                        ${h.resources.map(r => `<span class="badge">${r}</span>`).join('')}
+                    </div>
+                    <div style="margin-top: auto; display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-weight: bold; font-size: 0.9rem;"><i class="fas fa-users"></i> ${h.capacity} capacity</span>
+                        ${isBooked
+                            ? '<button class="btn btn-outline btn-sm" type="button" disabled style="opacity: 0.55; cursor: not-allowed; border-color: #ff4444; color: #ff4444;">Booked</button>'
+                            : `<button class="btn btn-primary btn-sm" type="button" onclick="openBookingModal('${h._id}', '${h.name}')">Book Hall</button>`}
+                    </div>
+                </div>
+            `}).join('');
+        }
+
+        function filterHalls(query) {
+            const q = query.toLowerCase().trim();
+            if (!q) {
+                renderHalls(allHalls);
+                return;
+            }
+            const filtered = allHalls.filter(h =>
+                h.name.toLowerCase().includes(q) ||
+                h.location.toLowerCase().includes(q) ||
+                (h.resources || []).some(r => r.toLowerCase().includes(q))
+            );
+            renderHalls(filtered);
+        }
+
+        function toggleRecommendationModal() {
+            const modal = document.getElementById('recommend-modal');
+            const overlay = document.getElementById('modal-overlay');
+            const isVisible = modal.style.display === 'block';
+            modal.style.display = isVisible ? 'none' : 'block';
+            overlay.style.display = isVisible ? 'none' : 'block';
+        }
+
+        async function getRecommendations() {
+            const capacity = document.getElementById('rec-capacity').value;
+            const resources = document.getElementById('rec-resources').value;
+            const resultsDiv = document.getElementById('rec-results');
+            
+            try {
+                const recs = await api.bookings.getRecommendations({ capacity, resources });
+                if (recs.length === 0) {
+                    resultsDiv.innerHTML = '<p style="color: var(--error)">No matching halls found.</p>';
+                } else {
+                    resultsDiv.innerHTML = '<h4>Top Suggestions:</h4>' + recs.map(h => `
+                        <div style="padding: 0.5rem; border-bottom: 1px solid var(--border-color); cursor: pointer;" onclick="toggleRecommendationModal(); renderHalls([allHalls.find(ah => ah._id === '${h._id}')])">
+                            ${h.name} (${h.capacity} cap)
+                        </div>
+                    `).join('');
+                }
+            } catch (err) {
+                showNotification(err.message, 'error');
+            }
+        }
+
+        function toggleBookingModal() {
+            const modal = document.getElementById('booking-modal');
+            const overlay = document.getElementById('modal-overlay');
+            const isVisible = modal.style.display === 'block';
+            modal.style.display = isVisible ? 'none' : 'block';
+            overlay.style.display = isVisible ? 'none' : 'block';
+        }
+
+        function openBookingModal(id, name) {
+            if (isHallBooked(id)) {
+                showNotification('This hall is already booked and cannot be requested right now.', 'error');
+                return;
+            }
+            document.getElementById('booking-hall-id').value = id;
+            document.getElementById('booking-hall-name').textContent = `Book ${name}`;
+            const user = JSON.parse(localStorage.getItem('user'));
+            if(user) document.getElementById('book-name').value = user.name;
+            toggleBookingModal();
+        }
+
+        document.getElementById('booking-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const clubSelection = document.getElementById('book-club').value;
+            const payload = {
+                hallId: document.getElementById('booking-hall-id').value,
+                name: document.getElementById('book-name').value,
+                year: document.getElementById('book-year').value,
+                department: document.getElementById('book-department').value,
+                club: clubSelection === 'Other' ? document.getElementById('book-club-other').value : clubSelection,
+                post: document.getElementById('book-post').value,
+                eventName: document.getElementById('book-event-name').value,
+                date: document.getElementById('book-date').value,
+                startTime: document.getElementById('book-start').value,
+                endTime: document.getElementById('book-end').value,
+                purpose: document.getElementById('book-purpose').value
+            };
+
+            try {
+                await api.bookings.create(payload);
+                showNotification('Booking request submitted! Waiting for approval.', 'success');
+                toggleBookingModal();
+                setTimeout(() => window.location.href = 'bookings.html', 1500);
+            } catch (err) {
+                // Conflict resolution suggestion handled in error message
+                const msg = err.suggestion ? `${err.message} ${err.suggestion}` : err.message;
+                showNotification(msg, 'error');
+            }
+        }
+    </script>
+</body>
+</html>
