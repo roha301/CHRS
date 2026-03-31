@@ -121,7 +121,7 @@
                 });
                 document.getElementById('ev-time').textContent = `${ev.startTime} - ${ev.endTime}`;
                 document.getElementById('ev-hall').textContent = ev.hallName;
-                document.getElementById('ev-seats').textContent = `${(ev.participants || []).length} / ${ev.maxParticipants}`;
+                document.getElementById('ev-seats').textContent = `${ev.participantCount ?? (ev.participants || []).length} / ${ev.maxParticipants}`;
                 document.getElementById('ev-desc').textContent = ev.description || '';
                 setState('register');
             } catch {

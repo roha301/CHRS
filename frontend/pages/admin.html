@@ -270,13 +270,7 @@
             <img src="../assets/kkw_logo.png" alt="KKW Logo" style="height: 30px; width: auto;">
             <h2 style="color: white; font-family: Poppins, sans-serif; font-size: 1.4rem; margin: 0;">KKWIEER</h2>
         </div>
-        <div style="display: flex; gap: 1.4rem; align-items: center; flex-wrap: wrap;">
-            <a href="dashboard.html" style="color: rgba(255,255,255,0.82); text-decoration: none;">Dashboard</a>
-            <a href="bookings.html" style="color: rgba(255,255,255,0.82); text-decoration: none;">My Bookings</a>
-            <a href="events.html" style="color: rgba(255,255,255,0.82); text-decoration: none;">Events</a>
-            <a href="admin.html" style="color: white; text-decoration: none; font-weight: 700;">Admin Panel</a>
-            <a href="#" onclick="logout()" style="color: rgba(255,200,200,0.92); text-decoration: none;"><i class="fas fa-sign-out-alt"></i></a>
-        </div>
+        <div data-nav-links style="display: flex; gap: 1.4rem; align-items: center; flex-wrap: wrap;"></div>
     </nav>
 
     <main class="shell">
@@ -447,6 +441,7 @@
                 <span class="chip" id="hall-summary-total"><i class="fas fa-building"></i> 0 halls</span>
                 <span class="chip" id="hall-summary-available"><i class="fas fa-circle-check"></i> 0 available</span>
                 <span class="chip" id="hall-summary-booked"><i class="fas fa-lock"></i> 0 booked</span>
+                <span class="chip" id="hall-summary-maintenance"><i class="fas fa-screwdriver-wrench"></i> 0 maintenance scheduled</span>
             </div>
 
             <div id="admin-halls-grid" class="grid-halls"></div>
@@ -500,6 +495,40 @@
         </div>
     </div>
 
+    <div id="maintenance-overlay" class="modal-overlay" onclick="if(event.target === this) closeMaintenanceModal()">
+        <div class="glass-card modal-card">
+            <div class="header-line">
+                <div>
+                    <h3 id="maintenance-title">Schedule maintenance</h3>
+                    <p class="subtle">Block a hall so new requests cannot be placed during this window.</p>
+                </div>
+                <button class="btn btn-outline btn-sm" type="button" onclick="closeMaintenanceModal()"><i class="fas fa-times"></i></button>
+            </div>
+            <form id="maintenance-form">
+                <input type="hidden" id="maintenance-hall-id">
+                <label for="maintenance-label">Maintenance Title</label>
+                <input type="text" id="maintenance-label" placeholder="Deep cleaning, projector repair" required>
+                <div class="grid-2" style="grid-template-columns: repeat(3, 1fr);">
+                    <div>
+                        <label for="maintenance-date">Date</label>
+                        <input type="date" id="maintenance-date" required>
+                    </div>
+                    <div>
+                        <label for="maintenance-start">Start Time</label>
+                        <input type="time" id="maintenance-start" required>
+                    </div>
+                    <div>
+                        <label for="maintenance-end">End Time</label>
+                        <input type="time" id="maintenance-end" required>
+                    </div>
+                </div>
+                <label for="maintenance-notes">Notes</label>
+                <textarea id="maintenance-notes" rows="3" placeholder="Optional details for students and admins"></textarea>
+                <button class="btn btn-primary" type="submit" style="width: 100%;">Save Maintenance Block</button>
+            </form>
+        </div>
+    </div>
+
     <script src="../js/api.js"></script>
     <script>
         const state = {
@@ -513,6 +542,7 @@
 
         function bootstrapAdmin() {
             checkAuth();
+            buildNavbar('admin');
             guardAdmin();
             bindEvents();
             restoreActiveTab();
@@ -533,6 +563,7 @@
             document.getElementById('hall-admin-search').addEventListener('input', renderHalls);
             document.getElementById('add-hall-form').addEventListener('submit', createHall);
             document.getElementById('edit-hall-form').addEventListener('submit', saveHall);
+            document.getElementById('maintenance-form').addEventListener('submit', createMaintenanceWindow);
         }
 
         async function loadAdminData(showToast = false) {
@@ -622,7 +653,7 @@
                         </div>
                         ${statusBadge(booking.status)}
                     </div>
-                    <div class="record-meta">${escapeHtml(participantLine(booking))}<br>Booked till ${escapeHtml(formatBookingWindow(booking))}</div>
+                    <div class="record-meta">${escapeHtml(participantLine(booking))}<br>Booked till ${escapeHtml(formatBookingWindow(booking))}${formatRequestedResourcesLine(booking)}</div>
                     <div class="record-actions">
                         <span class="subtle">${escapeHtml(booking.club || 'Independent')}</span>
                         <button class="btn btn-outline btn-sm" type="button" onclick="updateStatus('${booking._id}', 'Released')">
@@ -675,7 +706,7 @@
                         </div>
                         ${statusBadge(booking.status)}
                     </div>
-                    <div class="record-meta">${escapeHtml(participantLine(booking))}<br>${escapeHtml(booking.club || 'Independent')}${booking.post ? ` - ${escapeHtml(booking.post)}` : ''}<br>Requested ${escapeHtml(formatCreatedAt(booking.createdAt))}</div>
+                    <div class="record-meta">${escapeHtml(participantLine(booking))}<br>${escapeHtml(booking.club || 'Independent')}${booking.post ? ` - ${escapeHtml(booking.post)}` : ''}${formatRequestedResourcesLine(booking)}<br>Requested ${escapeHtml(formatCreatedAt(booking.createdAt))}</div>
                     <div class="note">${escapeHtml(booking.purpose || 'No purpose provided.')}</div>
                     <div class="record-actions">
                         <span class="subtle">${escapeHtml(describe(booking.status))}</span>
@@ -689,10 +720,13 @@
             const halls = state.halls || [];
             const filtered = getFilteredHalls();
             const bookedCount = halls.filter((hall) => Boolean(getCurrentLock(hall._id))).length;
+            const maintenanceCount = halls.filter((hall) => getUpcomingMaintenanceWindows(hall._id).length > 0).length;
+            const availableNow = halls.filter((hall) => !getCurrentLock(hall._id) && !getLiveMaintenance(hall._id)).length;
 
             document.getElementById('hall-summary-total').innerHTML = `<i class="fas fa-building"></i> ${halls.length} halls`;
-            document.getElementById('hall-summary-available').innerHTML = `<i class="fas fa-circle-check"></i> ${halls.length - bookedCount} available`;
+            document.getElementById('hall-summary-available').innerHTML = `<i class="fas fa-circle-check"></i> ${availableNow} available`;
             document.getElementById('hall-summary-booked').innerHTML = `<i class="fas fa-lock"></i> ${bookedCount} booked`;
+            document.getElementById('hall-summary-maintenance').innerHTML = `<i class="fas fa-screwdriver-wrench"></i> ${maintenanceCount} maintenance scheduled`;
 
             const container = document.getElementById('admin-halls-grid');
             if (!filtered.length) {
@@ -702,9 +736,26 @@
 
             container.innerHTML = filtered.map((hall) => {
                 const lock = getCurrentLock(hall._id);
-                const tone = statusTone(lock ? 'Approved' : 'Completed');
+                const liveMaintenance = getLiveMaintenance(hall._id);
+                const maintenanceWindows = getUpcomingMaintenanceWindows(hall._id);
+                const tone = liveMaintenance
+                    ? { text: '#d97706', background: 'rgba(217, 119, 6, 0.12)', border: 'rgba(217, 119, 6, 0.24)' }
+                    : statusTone(lock ? 'Approved' : 'Completed');
                 const hasHistory = state.bookings.some((booking) => booking.hallId === hall._id);
                 const resources = Array.isArray(hall.resources) ? hall.resources : [];
+                const maintenanceHtml = maintenanceWindows.length
+                    ? maintenanceWindows.slice(0, 3).map((window) => `
+                        <div class="note" style="margin-top: 0.45rem; background: rgba(217, 119, 6, 0.08); border-left-color: rgba(217, 119, 6, 0.28);">
+                            <strong>${escapeHtml(window.title || 'Maintenance')}</strong><br>
+                            ${escapeHtml(formatMaintenanceWindow(window))}${window.notes ? `<br>${escapeHtml(window.notes)}` : ''}
+                            <div class="toolbar" style="justify-content: flex-end; margin-top: 0.5rem;">
+                                <button class="btn btn-outline btn-sm danger" type="button" onclick="deleteMaintenanceWindow('${hall._id}', '${window.id}')">
+                                    <i class="fas fa-trash"></i> Remove Block
+                                </button>
+                            </div>
+                        </div>
+                    `).join('')
+                    : '<div class="note">No maintenance block is scheduled for this hall.</div>';
 
                 return `
                     <div class="glass-card stack" style="padding:1.2rem;">
@@ -713,10 +764,19 @@
                                 <h3 style="margin-bottom:0.35rem;">${escapeHtml(hall.name)}</h3>
                                 <div class="record-meta"><i class="fas fa-location-dot"></i> ${escapeHtml(hall.location || 'Unknown location')}<br><i class="fas fa-users"></i> ${escapeHtml(hall.capacity || 0)} capacity</div>
                             </div>
-                            <span class="status" style="color:${tone.text}; background:${tone.background}; border-color:${tone.border};">${lock ? 'Booked' : 'Available'}</span>
+                            <span class="status" style="color:${tone.text}; background:${tone.background}; border-color:${tone.border};">${liveMaintenance ? 'Maintenance' : lock ? 'Booked' : 'Available'}</span>
                         </div>
                         <div class="resource-wrap">${resources.map((resource) => `<span class="badge">${escapeHtml(resource)}</span>`).join('')}</div>
-                        <div class="note">${lock ? `${escapeHtml(lock.eventName || 'Reserved Event')}<br>${escapeHtml(participantLine(lock))}<br>Booked till ${escapeHtml(formatBookingWindow(lock))}` : 'No active approved booking is blocking this hall right now.'}</div>
+                        <div class="note">${lock ? `${escapeHtml(lock.eventName || 'Reserved Event')}<br>${escapeHtml(participantLine(lock))}<br>Booked till ${escapeHtml(formatBookingWindow(lock))}${formatRequestedResourcesLine(lock)}` : 'No active approved booking is blocking this hall right now.'}</div>
+                        <div class="stack">
+                            <div class="header-line">
+                                <strong style="font-size: 0.9rem;">Maintenance</strong>
+                                <button class="btn btn-outline btn-sm" type="button" onclick="openMaintenanceModal('${hall._id}')">
+                                    <i class="fas fa-screwdriver-wrench"></i> Schedule
+                                </button>
+                            </div>
+                            ${maintenanceHtml}
+                        </div>
                         <div class="record-actions">
                             <div class="toolbar">
                                 ${lock ? `<button class="btn btn-outline btn-sm" type="button" onclick="updateStatus('${lock._id}', 'Released')"><i class="fas fa-unlock"></i> Release Lock</button>` : ''}
@@ -743,6 +803,7 @@
                     booking.club,
                     booking.department,
                     booking.purpose,
+                    ...(Array.isArray(booking.requestedResources) ? booking.requestedResources : []),
                     booking.status
                 ].join(' ').toLowerCase();
                 return (!query || haystack.includes(query)) && (status === 'All' || booking.status === status);
@@ -753,7 +814,8 @@
             const query = document.getElementById('hall-admin-search').value.trim().toLowerCase();
             return state.halls.filter((hall) => {
                 if (!query) return true;
-                const haystack = [hall.name, hall.location, ...(Array.isArray(hall.resources) ? hall.resources : [])].join(' ').toLowerCase();
+                const maintenanceTerms = (hall.maintenanceWindows || []).flatMap((window) => [window.title, window.notes]);
+                const haystack = [hall.name, hall.location, ...(Array.isArray(hall.resources) ? hall.resources : []), ...maintenanceTerms].join(' ').toLowerCase();
                 return haystack.includes(query);
             });
         }
@@ -768,6 +830,23 @@
             return getActiveBookings().find((booking) => booking.hallId === hallId) || null;
         }
 
+        function getMaintenanceWindows(hallId) {
+            const hall = state.halls.find((item) => item._id === hallId);
+            return (hall?.maintenanceWindows || [])
+                .slice()
+                .filter((window) => getMaintenanceEnd(window) > new Date())
+                .sort((a, b) => getMaintenanceStart(a) - getMaintenanceStart(b));
+        }
+
+        function getLiveMaintenance(hallId) {
+            const now = new Date();
+            return getMaintenanceWindows(hallId).find((window) => getMaintenanceStart(window) <= now && getMaintenanceEnd(window) > now) || null;
+        }
+
+        function getUpcomingMaintenanceWindows(hallId) {
+            return getMaintenanceWindows(hallId);
+        }
+
         function isLive(booking) {
             return booking.status === 'Approved' && getEnd(booking) > new Date();
         }
@@ -776,12 +855,28 @@
             return new Date(`${booking.date}T${booking.endTime}:00`);
         }
 
+        function getMaintenanceStart(window) {
+            return new Date(`${window.date}T${window.startTime}:00`);
+        }
+
+        function getMaintenanceEnd(window) {
+            return new Date(`${window.date}T${window.endTime}:00`);
+        }
+
         function formatBookingWindow(booking) {
             const date = booking.date ? new Date(`${booking.date}T00:00:00`) : null;
             const dateText = date && !Number.isNaN(date.getTime())
                 ? date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
                 : 'Unknown date';
             return `${dateText} | ${formatTime(booking.startTime)} - ${formatTime(booking.endTime)}`;
+        }
+
+        function formatMaintenanceWindow(window) {
+            const date = window.date ? new Date(`${window.date}T00:00:00`) : null;
+            const dateText = date && !Number.isNaN(date.getTime())
+                ? date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+                : 'Unknown date';
+            return `${dateText} | ${formatTime(window.startTime)} - ${formatTime(window.endTime)}`;
         }
 
         function formatTime(value) {
@@ -794,6 +889,11 @@
 
         function participantLine(booking) {
             return `${booking.name || booking.user?.name || 'Unknown organizer'} | ${booking.year || 'Year not set'} | ${booking.department || 'Department not set'}`;
+        }
+
+        function formatRequestedResourcesLine(booking) {
+            const resources = Array.isArray(booking.requestedResources) ? booking.requestedResources.filter(Boolean) : [];
+            return resources.length ? `<br>Equipment: ${escapeHtml(resources.join(', '))}` : '';
         }
 
         function formatCreatedAt(value) {
@@ -865,6 +965,23 @@
             document.getElementById('edit-hall-overlay').style.display = 'none';
         }
 
+        function openMaintenanceModal(id) {
+            const hall = state.halls.find((item) => item._id === id);
+            if (!hall) {
+                showNotification('Hall not found.', 'error');
+                return;
+            }
+
+            document.getElementById('maintenance-form').reset();
+            document.getElementById('maintenance-hall-id').value = hall._id;
+            document.getElementById('maintenance-title').textContent = `Schedule maintenance for ${hall.name}`;
+            document.getElementById('maintenance-overlay').style.display = 'flex';
+        }
+
+        function closeMaintenanceModal() {
+            document.getElementById('maintenance-overlay').style.display = 'none';
+        }
+
         async function createHall(event) {
             event.preventDefault();
             const payload = {
@@ -899,6 +1016,38 @@
                 await loadAdminData();
             } catch (err) {
                 showNotification(err.message || 'Failed to update hall.', 'error');
+            }
+        }
+
+        async function createMaintenanceWindow(event) {
+            event.preventDefault();
+            const hallId = document.getElementById('maintenance-hall-id').value;
+            const payload = {
+                title: document.getElementById('maintenance-label').value.trim(),
+                date: document.getElementById('maintenance-date').value,
+                startTime: document.getElementById('maintenance-start').value,
+                endTime: document.getElementById('maintenance-end').value,
+                notes: document.getElementById('maintenance-notes').value.trim()
+            };
+
+            try {
+                await api.halls.addMaintenance(hallId, payload);
+                closeMaintenanceModal();
+                showNotification('Maintenance block scheduled.', 'success');
+                await loadAdminData();
+            } catch (err) {
+                showNotification(err.message || 'Failed to schedule maintenance.', 'error');
+            }
+        }
+
+        async function deleteMaintenanceWindow(hallId, windowId) {
+            if (!window.confirm('Remove this maintenance block?')) return;
+            try {
+                await api.halls.removeMaintenance(hallId, windowId);
+                showNotification('Maintenance block removed.', 'success');
+                await loadAdminData();
+            } catch (err) {
+                showNotification(err.message || 'Failed to remove maintenance block.', 'error');
             }
         }
 

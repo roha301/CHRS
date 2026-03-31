@@ -6,8 +6,58 @@ from io import BytesIO
 from flask import Blueprint, request, jsonify
 from db import bookings_collection, halls_collection, users_collection
 from middleware import auth_required, admin_required
+from routes.notifications import create_notification
 
 bookings_bp = Blueprint('bookings', __name__)
+
+
+def _parse_minutes(value):
+    try:
+        hour, minute = map(int, str(value).split(':'))
+        return (hour * 60) + minute
+    except Exception:
+        return None
+
+
+def _normalize_requested_resources(resources):
+    if not isinstance(resources, list):
+        return []
+    normalized = []
+    seen = set()
+    for item in resources:
+        value = str(item or '').strip()
+        if not value:
+            continue
+        key = value.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        normalized.append(value)
+    return normalized
+
+
+def get_maintenance_conflicts(hall_id, date, start_time, end_time):
+    hall = halls_collection.find_one({'_id': hall_id}, {'maintenanceWindows': 1, 'name': 1, 'resources': 1})
+    if not hall:
+        return []
+
+    start_minutes = _parse_minutes(start_time)
+    end_minutes = _parse_minutes(end_time)
+    if start_minutes is None or end_minutes is None:
+        return []
+
+    conflicts = []
+    for window in hall.get('maintenanceWindows', []):
+        if window.get('date') != date:
+            continue
+        window_start = _parse_minutes(window.get('startTime'))
+        window_end = _parse_minutes(window.get('endTime'))
+        if window_start is None or window_end is None:
+            continue
+        if start_minutes < window_end and end_minutes > window_start:
+            conflicts.append(window)
+    return conflicts
+
 
 def check_overlap(hall_id, date, start_time, end_time):
     return list(bookings_collection.find({
@@ -25,7 +75,7 @@ def find_nearest_slot(hall_id, date, duration_minutes):
         e_min = duration_minutes % 60
         e_time = f"{e_hour:02d}:{e_min:02d}"
         
-        if not check_overlap(hall_id, date, s_time, e_time):
+        if not check_overlap(hall_id, date, s_time, e_time) and not get_maintenance_conflicts(hall_id, date, s_time, e_time):
             return f"{s_time} - {e_time}"
     return "No available slots found for this date."
 
@@ -47,19 +97,59 @@ def create_booking():
         club = data.get('club')
         post = data.get('post')
         event_name = data.get('eventName')
+        requested_resources = _normalize_requested_resources(data.get('requestedResources', []))
         
         user_id = request.user['id']
+        hall = halls_collection.find_one({'_id': hall_id})
+        if not hall:
+            return jsonify({'message': 'Hall not found'}), 404
+
+        start_minutes = _parse_minutes(start_time)
+        end_minutes = _parse_minutes(end_time)
+        if not date or start_minutes is None or end_minutes is None:
+            return jsonify({'message': 'Booking date and time are required'}), 400
+        if start_minutes >= end_minutes:
+            return jsonify({'message': 'End time must be after the start time'}), 400
+
+        available_resources = {str(item).strip().lower(): str(item).strip() for item in hall.get('resources', []) if str(item).strip()}
+        invalid_resources = [item for item in requested_resources if item.lower() not in available_resources]
+        if invalid_resources:
+            return jsonify({
+                'message': 'Some selected equipment is not available in this hall',
+                'invalidResources': invalid_resources
+            }), 400
 
         # Calculate duration
-        s_h, s_m = map(int, start_time.split(':'))
-        e_h, e_m = map(int, end_time.split(':'))
-        duration = (e_h * 60 + e_m) - (s_h * 60 + s_m)
+        duration = end_minutes - start_minutes
+
+        # --- Past-time guard: can't book a slot whose start time has already passed ---
+        try:
+            booking_start_dt = datetime.datetime.strptime(f"{date} {start_time}", '%Y-%m-%d %H:%M')
+            if booking_start_dt < datetime.datetime.now():
+                return jsonify({'message': 'Cannot book a slot in the past. Please choose a future time.'}), 400
+        except Exception:
+            pass
+
+        maintenance_conflicts = get_maintenance_conflicts(hall_id, date, start_time, end_time)
+        if maintenance_conflicts:
+            window = maintenance_conflicts[0]
+            return jsonify({
+                'message': 'Hall is blocked for maintenance during this slot.',
+                'suggestion': f"Maintenance window: {window.get('title', 'Maintenance')} ({window.get('startTime')} - {window.get('endTime')})"
+            }), 409
 
         overlaps = check_overlap(hall_id, date, start_time, end_time)
         if overlaps:
             suggestion = find_nearest_slot(hall_id, date, duration)
+            clashing = [{
+                'eventName': o.get('eventName', 'Event'),
+                'startTime': o.get('startTime'),
+                'endTime': o.get('endTime'),
+                'status': o.get('status')
+            } for o in overlaps]
             return jsonify({
-                'message': 'Hall already booked for this slot.',
+                'message': 'This time slot clashes with an existing booking.',
+                'clashing': clashing,
                 'suggestion': f"Nearest available slot: {suggestion}"
             }), 409
 
@@ -73,6 +163,7 @@ def create_booking():
             'club': club,
             'post': post,
             'eventName': event_name,
+            'requestedResources': requested_resources,
             'date': date,
             'startTime': start_time,
             'endTime': end_time,
@@ -172,6 +263,19 @@ def update_booking_status(id):
             update_doc['$unset'] = unset_fields
 
         bookings_collection.update_one({'_id': id}, update_doc)
+
+        # Notify booking owner about status change
+        status_emoji = '✅' if status == 'Approved' else '❌' if status == 'Rejected' else '🔓'
+        hall = halls_collection.find_one({'_id': booking['hallId']})
+        hall_name = hall['name'] if hall else 'Unknown Hall'
+        create_notification(
+            booking['userId'],
+            f'{status_emoji} Booking {status}',
+            f'Your booking for "{booking.get("eventName", "Event")}" at {hall_name} has been {status.lower()}.',
+            'booking',
+            '/pages/bookings.html'
+        )
+
         updated_booking = bookings_collection.find_one({'_id': id})
         return jsonify(updated_booking)
     except Exception as e:
@@ -242,3 +346,70 @@ def get_approved_bookings():
             'hallName': hall['name'] if hall else 'Unknown Hall'
         })
     return jsonify(calendar_data)
+
+
+@bookings_bp.route('/availability', methods=['GET'])
+@auth_required
+def get_hall_availability():
+    """Return all occupied slots (Pending + Approved bookings AND maintenance windows)
+    for a given hall on a given date so the frontend can warn users in real-time."""
+    hall_id = request.args.get('hallId')
+    date = request.args.get('date')
+    if not hall_id or not date:
+        return jsonify({'message': 'hallId and date are required'}), 400
+
+    hall = halls_collection.find_one({'_id': hall_id})
+    if not hall:
+        return jsonify({'message': 'Hall not found'}), 404
+
+    # 1. Bookings that are active on this date
+    occupied_bookings = list(bookings_collection.find({
+        'hallId': hall_id,
+        'date': date,
+        'status': {'$in': ['Pending', 'Approved']}
+    }))
+
+    # Filter out bookings whose end time has already passed
+    now = datetime.datetime.now()
+    slots = []
+    for b in occupied_bookings:
+        try:
+            end_dt = datetime.datetime.strptime(f"{date} {b['endTime']}", '%Y-%m-%d %H:%M')
+            if end_dt <= now:
+                continue
+        except Exception:
+            pass
+        slots.append({
+            'type': 'booking',
+            'eventName': b.get('eventName', 'Event'),
+            'startTime': b['startTime'],
+            'endTime': b['endTime'],
+            'status': b['status']
+        })
+
+    # 2. Maintenance windows on this date
+    for window in hall.get('maintenanceWindows', []):
+        if window.get('date') == date:
+            try:
+                end_dt = datetime.datetime.strptime(f"{date} {window['endTime']}", '%Y-%m-%d %H:%M')
+                if end_dt <= now:
+                    continue
+            except Exception:
+                pass
+            slots.append({
+                'type': 'maintenance',
+                'eventName': window.get('title', 'Maintenance'),
+                'startTime': window.get('startTime'),
+                'endTime': window.get('endTime'),
+                'status': 'Blocked'
+            })
+
+    # Sort by start time
+    slots.sort(key=lambda s: s.get('startTime', ''))
+
+    return jsonify({
+        'hallId': hall_id,
+        'hallName': hall.get('name', 'Unknown'),
+        'date': date,
+        'slots': slots
+    })

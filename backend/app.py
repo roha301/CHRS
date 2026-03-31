@@ -9,6 +9,7 @@ from routes.bookings import bookings_bp
 from routes.analytics import analytics_bp
 from routes.poster import poster_bp
 from routes.events import events_bp
+from routes.notifications import notifications_bp
 
 load_dotenv()
 init_db()
@@ -23,6 +24,7 @@ app.register_blueprint(bookings_bp, url_prefix='/api/bookings')
 app.register_blueprint(analytics_bp, url_prefix='/api/bookings')
 app.register_blueprint(poster_bp, url_prefix='/api/bookings')
 app.register_blueprint(events_bp, url_prefix='/api/events')
+app.register_blueprint(notifications_bp, url_prefix='/api/notifications')
 
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')

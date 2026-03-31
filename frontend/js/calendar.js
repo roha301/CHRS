@@ -62,24 +62,48 @@ function _drawCalendar(targetId) {
         const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
         const dayBookings = bookings.filter(b => b.date === dateStr);
         const isBooked = dayBookings.length > 0;
+        const hasOnlyMaintenance = isBooked && dayBookings.every((entry) => entry.entryType === 'maintenance');
         const isToday = (day === today.getDate() && month === today.getMonth() && year === today.getFullYear());
 
         // Build a plain-text tooltip list
         const tooltipLines = isBooked
-            ? dayBookings.map(b => `${b.eventName || 'Event'}${b.club && b.club !== 'None' ? ' (' + b.club + ')' : ''} @ ${b.hallName || b.hall?.name || 'Hall'} [${b.startTime || ''}]`).join('\n')
+            ? dayBookings.map(b => {
+                const label = b.entryType === 'maintenance'
+                    ? (b.title || b.eventName || 'Maintenance')
+                    : (b.eventName || 'Event');
+                const scope = b.entryType === 'maintenance'
+                    ? 'Maintenance'
+                    : (b.club && b.club !== 'None' ? `(${b.club})` : '');
+                return `${label}${scope ? ' ' + scope : ''} @ ${b.hallName || b.hall?.name || 'Hall'} [${b.startTime || ''}]`;
+            }).join('\n')
             : '';
+
+        // Build event name labels (show up to 2 event names + overflow indicator)
+        let eventLabelsHtml = '';
+        if (isBooked) {
+            const maxShow = 2;
+            const shown = dayBookings.slice(0, maxShow);
+            eventLabelsHtml = shown.map(b => {
+                const isMaintenance = b.entryType === 'maintenance';
+                const label = isMaintenance ? (b.title || b.eventName || 'Maintenance') : (b.eventName || 'Booked');
+                const background = isMaintenance ? '#d97706' : 'var(--primary)';
+                return `<div style="font-size: 0.65rem; font-weight: 600; color: white; background: ${background}; border-radius: 3px; padding: 1px 4px; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.3;">${label}</div>`;
+            }).join('');
+            if (dayBookings.length > maxShow) {
+                eventLabelsHtml += `<div style="font-size: 0.58rem; color: var(--primary); font-weight: 600; margin-top: 1px;">+${dayBookings.length - maxShow} more</div>`;
+            }
+        }
 
         html += `
             <div
-                style="padding: 6px 2px; min-height: 44px; border-radius: 6px; position: relative;
-                    background: ${isBooked ? 'rgba(29,78,216,0.10)' : isToday ? 'rgba(29,78,216,0.05)' : 'transparent'};
-                    border: 1.5px solid ${isBooked ? 'var(--primary)' : isToday ? 'rgba(29,78,216,0.3)' : 'transparent'};
+                style="padding: 4px 3px; min-height: 52px; border-radius: 6px; position: relative;
+                    background: ${isBooked ? (hasOnlyMaintenance ? 'rgba(217,119,6,0.08)' : 'rgba(29,78,216,0.06)') : isToday ? 'rgba(29,78,216,0.04)' : 'transparent'};
+                    border: 1.5px solid ${isBooked ? (hasOnlyMaintenance ? 'rgba(217,119,6,0.7)' : 'var(--primary)') : isToday ? 'rgba(29,78,216,0.3)' : 'transparent'};
                     cursor: ${isBooked ? 'pointer' : 'default'};"
                 ${isBooked ? `title="${tooltipLines.replace(/"/g, '&quot;')}"` : ''}
             >
-                <span style="font-size: 0.85rem; font-weight: ${isToday ? '700' : '400'}; color: ${isToday ? 'var(--primary)' : 'var(--text-main)'};">${day}</span>
-                ${isBooked ? `<div style="width: 5px; height: 5px; background: var(--primary); border-radius: 50%; margin: 3px auto 0;"></div>` : ''}
-                ${isBooked ? `<div style="font-size: 0.6rem; color: var(--primary); line-height: 1.2; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${dayBookings[0].eventName || 'Booked'}</div>` : ''}
+                <span style="font-size: 0.82rem; font-weight: ${isToday ? '700' : '400'}; color: ${isToday ? 'var(--primary)' : 'var(--text-main)'};">${day}</span>
+                ${eventLabelsHtml}
             </div>
         `;
     }

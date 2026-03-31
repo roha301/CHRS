@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KKWIEER - Profile & Settings</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body onload="checkAuth(); loadProfile()">
+    <div id="notification" class="notification"></div>
+
+    <nav class="glass-card" style="margin: 1rem; padding: 1rem 2rem; border-radius: 1rem; display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <img src="../assets/kkw_logo.png" alt="KKW Logo" style="height: 30px; width: auto;">
+            <h2 style="color: white; font-family: Poppins, sans-serif; font-size: 1.4rem; margin: 0;">KKWIEER</h2>
+        </div>
+        <div data-nav-links style="display: flex; gap: 2rem; align-items: center; flex-wrap: wrap;">
+            <!-- Rebuilt by api.js buildNavbar() -->
+        </div>
+    </nav>
+
+    <main style="padding: 2rem;">
+        <div class="profile-container">
+            <!-- Profile Hero -->
+            <div class="profile-hero animate-fade" id="profile-hero">
+                <div class="profile-hero-avatar" id="profile-avatar-lg">?</div>
+                <div class="profile-hero-info">
+                    <h1 id="profile-name-lg">Loading...</h1>
+                    <p id="profile-email-lg">Loading...</p>
+                    <div class="profile-meta">
+                        <span class="profile-meta-item" id="profile-role-badge">
+                            <i class="fas fa-user"></i> <span id="profile-role-text">Student</span>
+                        </span>
+                        <span class="profile-meta-item" id="profile-auth-badge">
+                            <i class="fas fa-key"></i> <span id="profile-auth-text">Local</span>
+                        </span>
+                        <span class="profile-meta-item" id="profile-since-badge" style="display: none;">
+                            <i class="fas fa-calendar-alt"></i> <span id="profile-since-text"></span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <!-- Edit Profile -->
+                <div class="profile-section">
+                    <div class="glass-card animate-fade" style="animation-delay: 0.1s;">
+                        <h3><i class="fas fa-user-edit"></i> Edit Profile</h3>
+                        <form id="edit-profile-form">
+                            <label for="edit-name">Full Name</label>
+                            <input type="text" id="edit-name" placeholder="Your name" required>
+
+                            <label for="edit-crn">CRN Number <span style="font-size: 0.75rem; color: var(--text-light);">(Optional)</span></label>
+                            <input type="text" id="edit-crn" placeholder="e.g. 123456">
+
+                            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;">
+                                <i class="fas fa-save"></i> Save Changes
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Change Password -->
+                <div class="profile-section">
+                    <div class="glass-card animate-fade" style="animation-delay: 0.2s;">
+                        <h3><i class="fas fa-lock"></i> Change Password</h3>
+                        <div id="password-section-content">
+                            <form id="change-password-form">
+                                <label for="old-password">Current Password</label>
+                                <div class="password-container">
+                                    <input type="password" id="old-password" placeholder="Enter current password" required>
+                                    <span class="toggle-password" onclick="togglePw('old-password', this)">Show</span>
+                                </div>
+
+                                <label for="new-password">New Password</label>
+                                <div class="password-container">
+                                    <input type="password" id="new-password" placeholder="Enter new password" required>
+                                    <span class="toggle-password" onclick="togglePw('new-password', this)">Show</span>
+                                </div>
+
+                                <label for="confirm-new-password">Confirm New Password</label>
+                                <div class="password-container">
+                                    <input type="password" id="confirm-new-password" placeholder="Confirm new password" required>
+                                    <span class="toggle-password" onclick="togglePw('confirm-new-password', this)">Show</span>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;">
+                                    <i class="fas fa-key"></i> Update Password
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Activity Summary -->
+            <div class="profile-section">
+                <div class="glass-card animate-fade" style="animation-delay: 0.3s;">
+                    <h3><i class="fas fa-chart-bar"></i> Activity Summary</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-top: 1rem;">
+                        <div style="text-align: center; background: rgba(29,78,216,0.05); padding: 1.25rem; border-radius: var(--radius-sm);">
+                            <div style="font-size: 2rem; font-weight: 800; color: var(--primary); font-family: Poppins, sans-serif;" id="stat-my-bookings">0</div>
+                            <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 0.25rem;">Total Bookings</div>
+                        </div>
+                        <div style="text-align: center; background: rgba(22,163,74,0.05); padding: 1.25rem; border-radius: var(--radius-sm);">
+                            <div style="font-size: 2rem; font-weight: 800; color: var(--success); font-family: Poppins, sans-serif;" id="stat-approved">0</div>
+                            <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 0.25rem;">Approved</div>
+                        </div>
+                        <div style="text-align: center; background: rgba(217,119,6,0.05); padding: 1.25rem; border-radius: var(--radius-sm);">
+                            <div style="font-size: 2rem; font-weight: 800; color: var(--warning); font-family: Poppins, sans-serif;" id="stat-pending">0</div>
+                            <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 0.25rem;">Pending</div>
+                        </div>
+                        <div style="text-align: center; background: rgba(124,58,237,0.05); padding: 1.25rem; border-radius: var(--radius-sm);">
+                            <div style="font-size: 2rem; font-weight: 800; color: #7c3aed; font-family: Poppins, sans-serif;" id="stat-events">0</div>
+                            <div style="font-size: 0.82rem; color: var(--text-muted); margin-top: 0.25rem;">Events Organized</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="profile-section">
+                <div class="glass-card animate-fade" style="animation-delay: 0.4s;">
+                    <h3><i class="fas fa-history"></i> Recent Activity</h3>
+                    <div id="recent-activity" style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem;">
+                        <p style="color: var(--text-muted); text-align: center; padding: 1rem; font-size: 0.9rem;">Loading activity...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Danger Zone -->
+            <div class="profile-section">
+                <div class="glass-card animate-fade" style="animation-delay: 0.5s; border-color: rgba(220,38,38,0.2);">
+                    <h3 style="color: var(--error);"><i class="fas fa-exclamation-triangle"></i> Account</h3>
+                    <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">
+                        Sign out of your account on this device.
+                    </p>
+                    <button class="btn btn-outline" style="border-color: var(--error); color: var(--error);" onclick="logout()">
+                        <i class="fas fa-sign-out-alt"></i> Sign Out
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="../js/api.js"></script>
+    <script>
+        async function loadProfile() {
+            try {
+                buildNavbar('profile');
+
+                const [profile, bookings, events] = await Promise.all([
+                    api.auth.getProfile(),
+                    api.bookings.getUserBookings().catch(() => []),
+                    api.events.getMine().catch(() => [])
+                ]);
+
+                // Hero section
+                const avatarEl = document.getElementById('profile-avatar-lg');
+                if (profile.avatarUrl) {
+                    avatarEl.innerHTML = `<img src="${profile.avatarUrl}" alt="Avatar">`;
+                } else {
+                    avatarEl.textContent = (profile.name || 'U').charAt(0).toUpperCase();
+                }
+
+                document.getElementById('profile-name-lg').textContent = profile.name || 'User';
+                document.getElementById('profile-email-lg').textContent = profile.email || '';
+                document.getElementById('profile-role-text').textContent = (profile.role || 'student').toUpperCase();
+                document.getElementById('profile-auth-text').textContent = 
+                    profile.authProvider === 'google' ? 'Google Account' : 'Email/Password';
+
+                if (profile.createdAt) {
+                    const sinceDate = new Date(profile.createdAt + 'Z');
+                    document.getElementById('profile-since-text').textContent = 
+                        'Member since ' + sinceDate.toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
+                    document.getElementById('profile-since-badge').style.display = 'inline-flex';
+                }
+
+                // Edit form
+                document.getElementById('edit-name').value = profile.name || '';
+                document.getElementById('edit-crn').value = profile.crn || '';
+
+                // Password section — hide for Google users
+                if (profile.authProvider === 'google') {
+                    document.getElementById('password-section-content').innerHTML = `
+                        <div style="text-align: center; padding: 1.5rem;">
+                            <i class="fab fa-google" style="font-size: 2rem; color: #4285F4; margin-bottom: 0.75rem;"></i>
+                            <p style="color: var(--text-muted); font-size: 0.9rem;">
+                                You signed in with Google. To change your password, use your
+                                <a href="https://myaccount.google.com/security" target="_blank" style="color: var(--primary);">Google Account settings</a>.
+                            </p>
+                        </div>
+                    `;
+                }
+
+                // Activity stats
+                const activeBookings = bookings.filter(b => b.status !== 'Cancelled');
+                document.getElementById('stat-my-bookings').textContent = activeBookings.length;
+                document.getElementById('stat-approved').textContent = activeBookings.filter(b => b.status === 'Approved').length;
+                document.getElementById('stat-pending').textContent = activeBookings.filter(b => b.status === 'Pending').length;
+                document.getElementById('stat-events').textContent = events.length;
+
+                // Recent activity
+                const recentContainer = document.getElementById('recent-activity');
+                const allActivity = [
+                    ...activeBookings.map(b => ({
+                        icon: 'fas fa-calendar-check',
+                        color: statusColor(b.status),
+                        text: `${b.eventName || 'Booking'} — ${b.hall?.name || 'Hall'} (${b.status})`,
+                        time: b.createdAt
+                    })),
+                    ...events.map(e => ({
+                        icon: 'fas fa-star',
+                        color: '#7c3aed',
+                        text: `Created event: ${e.title}`,
+                        time: e.createdAt
+                    }))
+                ].sort((a, b) => new Date(b.time) - new Date(a.time)).slice(0, 8);
+
+                if (allActivity.length > 0) {
+                    recentContainer.innerHTML = allActivity.map(a => `
+                        <div style="display: flex; gap: 0.75rem; align-items: center; padding: 0.6rem 0.75rem; background: var(--bg-main); border-radius: var(--radius-sm); border-left: 3px solid ${a.color};">
+                            <i class="${a.icon}" style="color: ${a.color}; flex-shrink: 0;"></i>
+                            <div style="flex: 1;">
+                                <span style="font-size: 0.85rem; font-weight: 500;">${a.text}</span>
+                            </div>
+                            <span style="font-size: 0.75rem; color: var(--text-light); white-space: nowrap;">${timeAgo(a.time)}</span>
+                        </div>
+                    `).join('');
+                } else {
+                    recentContainer.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 1rem; font-size: 0.9rem;">No activity yet.</p>';
+                }
+
+            } catch (err) {
+                showNotification(err.message, 'error');
+            }
+        }
+
+        function statusColor(s) {
+            if (s === 'Approved') return 'var(--success)';
+            if (s === 'Pending') return 'var(--warning)';
+            if (s === 'Completed') return '#3b82f6';
+            return 'var(--error)';
+        }
+
+        function togglePw(inputId, toggler) {
+            const inp = document.getElementById(inputId);
+            if (inp.type === 'password') { inp.type = 'text'; toggler.textContent = 'Hide'; }
+            else { inp.type = 'password'; toggler.textContent = 'Show'; }
+        }
+
+        // Edit profile form
+        document.getElementById('edit-profile-form').onsubmit = async (e) => {
+            e.preventDefault();
+            try {
+                const name = document.getElementById('edit-name').value.trim();
+                const crn = document.getElementById('edit-crn').value.trim();
+                await api.auth.updateProfile({ name, crn });
+                // Update local storage
+                const user = JSON.parse(localStorage.getItem('user') || '{}');
+                user.name = name;
+                localStorage.setItem('user', JSON.stringify(user));
+                showNotification('Profile updated!', 'success');
+                setTimeout(() => loadProfile(), 500);
+            } catch (err) {
+                showNotification(err.message, 'error');
+            }
+        };
+
+        // Change password form
+        const pwForm = document.getElementById('change-password-form');
+        if (pwForm) {
+            pwForm.onsubmit = async (e) => {
+                e.preventDefault();
+                const oldPw = document.getElementById('old-password').value;
+                const newPw = document.getElementById('new-password').value;
+                const confirmPw = document.getElementById('confirm-new-password').value;
+
+                if (newPw !== confirmPw) {
+                    showNotification('New passwords do not match.', 'error');
+                    return;
+                }
+                if (newPw.length < 4) {
+                    showNotification('Password must be at least 4 characters.', 'error');
+                    return;
+                }
+
+                try {
+                    await api.auth.changePassword({ oldPassword: oldPw, newPassword: newPw });
+                    showNotification('Password changed successfully!', 'success');
+                    pwForm.reset();
+                } catch (err) {
+                    showNotification(err.message, 'error');
+                }
+            };
+        }
+    </script>
+</body>
+</html>

@@ -15,6 +15,7 @@ users_collection = db.users
 halls_collection = db.halls
 bookings_collection = db.bookings
 events_collection = db.events
+notifications_collection = db.notifications
 # Each document in 'participants' sub-collection can be denormalized into events_collection
 
 def init_db():

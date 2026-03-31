@@ -19,13 +19,7 @@
             <img src="../assets/kkw_logo.png" alt="KKW Logo" style="height: 30px; width: auto;">
             <h2 style="color: white; font-family: Poppins, sans-serif; font-size: 1.4rem; margin: 0;">KKWIEER</h2>
         </div>
-        <div style="display: flex; gap: 2rem; align-items: center;">
-            <a href="dashboard.html" style="color: rgba(255,255,255,0.8); text-decoration: none;">Dashboard</a>
-            <a href="halls.html" style="color: rgba(255,255,255,0.8); text-decoration: none;">Reserve Hall</a>
-            <a href="bookings.html" style="color: rgba(255,255,255,0.8); text-decoration: none;">My Bookings</a>
-            <a href="events.html" style="color: white; text-decoration: none; font-weight: 600;">Events</a>
-            <a href="#" onclick="localStorage.clear(); window.location.href='../index.html'" style="color: rgba(255,200,200,0.9); text-decoration: none;"><i class="fas fa-sign-out-alt"></i></a>
-        </div>
+        <div data-nav-links style="display: flex; gap: 2rem; align-items: center; flex-wrap: wrap;"></div>
     </nav>
 
     <main style="padding: 2rem;">
@@ -185,19 +179,29 @@
     </div>
 
     <!-- QR Modal -->
-    <div id="qr-modal" style="display:none; position:fixed; inset:0; z-index:1001; background:rgba(10,20,60,0.55); backdrop-filter:blur(4px); align-items:center; justify-content:center;" onclick="if(event.target===this) closeQrModal()">
-        <div class="glass-card animate-fade" style="width:92%; max-width:420px; text-align:center;">
+    <div id="qr-modal" style="display:none; position:fixed; inset:0; z-index:1001; background:rgba(10,20,60,0.7); backdrop-filter:blur(8px); align-items:center; justify-content:center; padding: 1rem;" onclick="if(event.target===this) closeQrModal()">
+        <div class="glass-card animate-fade" style="width:100%; max-width:380px; text-align:center; padding: 1.5rem; background: linear-gradient(145deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95)); border-radius: 20px; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-                <h2 style="color:var(--primary);">Registration QR Code</h2>
-                <button class="btn btn-outline btn-sm" onclick="closeQrModal()"><i class="fas fa-times"></i></button>
+                <h2 id="qr-modal-title" style="color:white; font-size: 1.2rem; flex: 1; margin: 0; text-align: left;">Registration QR</h2>
+                <button class="btn btn-outline btn-sm" onclick="closeQrModal()" style="border-radius: 50%; width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.1); border: none; color: white;"><i class="fas fa-times"></i></button>
             </div>
-            <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:1rem;">Participants can scan this QR code to register for the event.</p>
-            <div id="qr-canvas" style="width:240px; height:240px; margin:0 auto; border:4px solid var(--border-color); border-radius:8px; overflow:hidden;"></div>
-            <p id="qr-event-title" style="margin-top:1rem; font-weight:600;"></p>
-            <a id="qr-link" href="#" target="_blank" rel="noopener noreferrer" style="display:block; margin-top:0.75rem; font-size:0.85rem; color:var(--primary); word-break:break-all;"></a>
-            <a id="qr-download-btn" class="btn btn-primary" style="display:inline-block; margin-top:1rem;" download="event_qr.png">
-                <i class="fas fa-download"></i> Download QR
-            </a>
+            
+            <div style="background: linear-gradient(135deg, #4f46e5, #7c3aed); padding: 2px; border-radius: 12px; margin-bottom: 1.5rem;">
+                <div style="background: var(--bg-card); padding: 1.25rem; border-radius: 10px;">
+                    <p id="qr-modal-description" style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem; font-weight: 500;"></p>
+                    <div id="qr-canvas-wrapper" style="background: white; padding: 0.75rem; border-radius: 8px; display: inline-block; box-shadow: 0 5px 10px -3px rgba(0, 0, 0, 0.1);">
+                        <div id="qr-canvas"></div>
+                    </div>
+                    <p id="qr-event-title" style="margin-top:1rem; font-weight:700; font-size: 1.1rem; color: white;"></p>
+                    <div id="qr-event-details" style="color: var(--text-light); font-size: 0.8rem; margin-top: 0.25rem;"></div>
+                </div>
+            </div>
+            
+            <button id="qr-download-btn" class="btn btn-primary" style="width: 100%; padding: 0.75rem; font-size: 1rem; border-radius: 8px; background: linear-gradient(135deg, #4f46e5, #7c3aed); border: none; box-shadow: 0 4px 14px 0 rgba(79, 70, 229, 0.39); margin-bottom: 1rem;">
+                <i class="fas fa-download" style="margin-right: 0.5rem;"></i> Download
+            </button>
+
+            <a id="qr-link" href="#" target="_blank" rel="noopener noreferrer" style="display:block; font-size:0.75rem; color:#818cf8; word-break:break-all; text-decoration: none; padding: 0.5rem; background: rgba(79, 70, 229, 0.1); border-radius: 6px;"></a>
         </div>
     </div>
 
@@ -233,6 +237,7 @@
 
         async function loadEvents() {
             try {
+                buildNavbar('events');
                 const [allEvs, myEvs] = await Promise.all([
                     api.events.getAll(),
                     api.events.getMine().catch(() => [])
@@ -287,10 +292,11 @@
                         <i class="fas fa-clock"></i> ${ev.startTime} &ndash; ${ev.endTime}
                         ${ev.club && ev.club !== 'None' ? `&nbsp;|&nbsp; <i class="fas fa-users"></i> ${ev.club}` : ''}
                     </div>
-                    ${ev.requiresRegistration ? `<div style="font-size: 0.78rem; background: rgba(29,78,216,0.07); padding: 0.4rem 0.7rem; border-radius: 4px; color: var(--primary); margin-bottom: 0.75rem;"><i class="fas fa-qrcode"></i> Registration Open &bull; ${(ev.participants||[]).length}/${ev.maxParticipants} registered</div>` : ''}
+                    ${ev.requiresRegistration ? `<div style="font-size: 0.78rem; background: rgba(29,78,216,0.07); padding: 0.4rem 0.7rem; border-radius: 4px; color: var(--primary); margin-bottom: 0.75rem;"><i class="fas fa-qrcode"></i> Registration Open &bull; ${(ev.participantCount ?? (ev.participants||[]).length)}/${ev.maxParticipants} registered</div>` : ''}
                     ${accessNote ? `<div style="font-size: 0.78rem; background: rgba(22,163,74,0.07); padding: 0.4rem 0.7rem; border-radius: 4px; color: var(--success); margin-bottom: 0.75rem;">${accessNote}</div>` : ''}
                     <div style="margin-top: auto; display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                        ${ev.requiresRegistration ? `<button class="btn btn-outline btn-sm" onclick="showQR('${ev._id}')"><i class="fas fa-qrcode"></i> QR Code</button>` : ''}
+                        ${ev.requiresRegistration ? `<button class="btn btn-outline btn-sm" onclick="showQR('${ev._id}', 'register')"><i class="fas fa-qrcode"></i> Registration QR</button>` : ''}
+                        ${ev.requiresRegistration && canViewAnalytics ? `<button class="btn btn-outline btn-sm" onclick="showQR('${ev._id}', 'checkin')"><i class="fas fa-user-check"></i> Check-in QR</button>` : ''}
                         ${canViewAnalytics ? `<button class="btn btn-primary btn-sm" onclick="showAnalytics('${ev._id}')"><i class="fas fa-chart-bar"></i> Analytics</button>` : ''}
                         ${canDelete ? `<button class="btn btn-outline btn-sm" style="color: var(--error); border-color: var(--error);" onclick="deleteEvent('${ev._id}', '${escapeInlineJsString(ev.title)}')"><i class="fas fa-trash"></i> Delete Event</button>` : ''}
                     </div>
@@ -306,49 +312,176 @@
             document.getElementById('tab-mine').style.display = tab === 'mine' ? 'block' : 'none';
         }
 
-        async function showQR(eventId) {
-            const ev = await api.events.getOne(eventId);
-            const regPath = ev.registrationPath || `/pages/event_register.html?eventId=${eventId}`;
+        function createBeautifulPoster(ev, qrDataUrl, fullUrl, mode) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 1080;
+            canvas.height = 1350; // Instagram Portrait size
+            const ctx = canvas.getContext('2d');
 
-            // If the browser is on localhost, fetch the real LAN IP so phones can reach the server
-            let baseUrl = window.location.origin;
-            const hostname = window.location.hostname;
-            if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '0.0.0.0') {
-                try {
-                    const info = await api.fetch('/events/server-info');
-                    baseUrl = `${window.location.protocol}//${info.ip}:${info.port}`;
-                } catch (e) {
-                    console.warn('Could not fetch server-info, using origin:', e);
-                }
+            // 1. Draw Background (Gradient)
+            const isCheckIn = mode === 'checkin';
+            const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+            if (isCheckIn) {
+                gradient.addColorStop(0, '#0f172a');
+                gradient.addColorStop(0.5, '#1e1b4b');
+                gradient.addColorStop(1, '#312e81');
+            } else {
+                gradient.addColorStop(0, '#0f172a'); // Very dark blue/slate
+                gradient.addColorStop(0.5, '#312e81'); // Indigo
+                gradient.addColorStop(1, '#4c1d95'); // Deep purple
             }
-            const fullUrl = baseUrl + regPath;
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            document.getElementById('qr-event-title').textContent = ev.title;
-            document.getElementById('qr-link').href = fullUrl;
-            document.getElementById('qr-link').textContent = fullUrl;
+            // Add some decorative circles
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.03)';
+            ctx.beginPath(); ctx.arc(100, 100, 300, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(900, 1200, 400, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(950, 200, 150, 0, Math.PI * 2); ctx.fill();
 
-            // Generate QR code on the fly
-            const container = document.getElementById('qr-canvas');
-            container.innerHTML = '';
-            const qr = new QRCode(container, {
-                text: fullUrl,
-                width: 232,
-                height: 232,
-                colorDark: '#000000',
-                colorLight: '#ffffff',
-                correctLevel: QRCode.CorrectLevel.H
+            // 2. Header
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 36px "Inter", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('KKWIEER', canvas.width / 2, 80);
+            ctx.font = '24px "Inter", sans-serif';
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+            ctx.fillText('College Hall Reservation System', canvas.width / 2, 120);
+
+            // 3. Event Title
+            ctx.fillStyle = isCheckIn ? '#38bdf8' : '#a78bfa';
+            ctx.font = 'bold 72px "Poppins", sans-serif';
+            ctx.fillText(ev.title, canvas.width / 2, 250);
+
+            // 4. Details Box
+            const boxY = 320;
+            const boxHeight = 220;
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+            ctx.beginPath();
+            ctx.roundRect(100, boxY, canvas.width - 200, boxHeight, 20);
+            ctx.fill();
+
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 36px "Inter", sans-serif';
+            ctx.textAlign = 'left';
+            
+            // Date & Time
+            ctx.fillText('📅 ' + fmtDate(ev.date), 150, boxY + 70);
+            ctx.fillText('⏰ ' + ev.startTime + ' - ' + ev.endTime, 150, boxY + 140);
+            
+            // Venue
+            ctx.textAlign = 'right';
+            ctx.fillText('📍 ' + ev.hallName, canvas.width - 150, boxY + 70);
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+            ctx.font = '28px "Inter", sans-serif';
+            ctx.fillText('Organized by: ' + (ev.club && ev.club !== 'None' ? ev.club : ev.organizerName), canvas.width - 150, boxY + 140);
+
+            // 5. Action Text
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 48px "Poppins", sans-serif';
+            ctx.fillText(isCheckIn ? 'SCAN TO CHECK IN' : 'SCAN TO REGISTER', canvas.width / 2, boxY + boxHeight + 80);
+
+            return new Promise((resolve) => {
+                // 6. Draw QR Code
+                const qrImage = new Image();
+                qrImage.onload = () => {
+                    const qrSize = 400;
+                    const qrX = (canvas.width - qrSize) / 2;
+                    const qrY = 700;
+                    
+                    // White background for QR with rounded corners
+                    ctx.fillStyle = '#ffffff';
+                    ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+                    ctx.shadowBlur = 30;
+                    ctx.shadowOffsetY = 15;
+                    ctx.beginPath();
+                    ctx.roundRect(qrX - 20, qrY - 20, qrSize + 40, qrSize + 40, 20);
+                    ctx.fill();
+                    
+                    // Reset shadow for image
+                    ctx.shadowColor = 'transparent';
+                    ctx.shadowBlur = 0;
+                    ctx.shadowOffsetY = 0;
+
+                    // Draw the actual QR code
+                    ctx.drawImage(qrImage, qrX, qrY, qrSize, qrSize);
+
+                    // URL at the bottom
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+                    ctx.font = '24px "Inter", sans-serif';
+                    ctx.fillText('Link: ' + fullUrl, canvas.width / 2, 1200);
+                    
+                    ctx.font = '20px "Inter", sans-serif';
+                    ctx.fillText('Powered by CHRS', canvas.width / 2, 1300);
+
+                    resolve(canvas.toDataURL('image/jpeg', 0.95));
+                };
+                qrImage.src = qrDataUrl;
             });
+        }
 
-            // Wait a tick for the library to render, then wire up the download button
-            setTimeout(() => {
-                const img = container.querySelector('img') || container.querySelector('canvas');
-                if (img) {
-                    const src = img.tagName === 'CANVAS' ? img.toDataURL('image/png') : img.src;
-                    document.getElementById('qr-download-btn').href = src;
+        async function showQR(eventId, mode = 'register') {
+            try {
+                const ev = await api.events.getOne(eventId);
+                const qrPath = mode === 'checkin'
+                    ? (await api.events.getCheckInAccess(eventId)).checkInPath
+                    : (ev.registrationPath || `/pages/event_register.html?eventId=${eventId}`);
+
+                // If the browser is on localhost, fetch the real LAN IP so phones can reach the server
+                let baseUrl = window.location.origin;
+                const hostname = window.location.hostname;
+                if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '0.0.0.0') {
+                    try {
+                        const info = await api.fetch('/events/server-info');
+                        baseUrl = `${window.location.protocol}//${info.ip}:${info.port}`;
+                    } catch (e) {
+                        console.warn('Could not fetch server-info, using origin:', e);
+                    }
                 }
-            }, 100);
+                const fullUrl = baseUrl + qrPath;
 
-            document.getElementById('qr-modal').style.display = 'flex';
+                document.getElementById('qr-event-title').textContent = ev.title;
+                document.getElementById('qr-event-details').innerHTML = `<i class="fas fa-map-marker-alt" style="margin-right: 4px;"></i>${ev.hallName} &nbsp;|&nbsp; <i class="fas fa-calendar" style="margin-right: 4px;"></i>${fmtDate(ev.date)}`;
+                document.getElementById('qr-modal-title').textContent = mode === 'checkin' ? 'Check-in Desk Poster' : 'Registration Poster';
+                document.getElementById('qr-modal-description').textContent = mode === 'checkin'
+                    ? 'Scan this at the venue to open the attendance desk.'
+                    : 'Share this beautiful poster for participants to register!';
+                document.getElementById('qr-link').href = fullUrl;
+                document.getElementById('qr-link').textContent = fullUrl;
+
+                const container = document.getElementById('qr-canvas');
+                container.innerHTML = '';
+                new QRCode(container, {
+                    text: fullUrl,
+                    width: 200,
+                    height: 200,
+                    colorDark: '#000000',
+                    colorLight: '#ffffff',
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+
+                document.getElementById('qr-download-btn').onclick = () => {
+                    const btn = document.getElementById('qr-download-btn');
+                    const origHtml = btn.innerHTML;
+                    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+                    
+                    const img = container.querySelector('img') || container.querySelector('canvas');
+                    const qrDataUrl = img.tagName === 'CANVAS' ? img.toDataURL('image/png') : img.src;
+
+                    createBeautifulPoster(ev, qrDataUrl, fullUrl, mode).then(posterDataUrl => {
+                        const link = document.createElement('a');
+                        link.download = `${ev.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_${mode}_poster.jpg`;
+                        link.href = posterDataUrl;
+                        link.click();
+                        btn.innerHTML = origHtml;
+                    });
+                };
+
+                document.getElementById('qr-modal').style.display = 'flex';
+            } catch (err) {
+                showNotification(err.message || 'Failed to generate QR code.', 'error');
+            }
         }
 
         function closeQrModal() {
@@ -363,7 +496,7 @@
                 const fillWidth = Math.min(data.fillRate, 100);
                 document.getElementById('analytics-content').innerHTML = `
                     <h3 style="margin-bottom: 1.5rem;">${data.title}</h3>
-                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem;">
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.5rem;">
                         <div style="text-align: center; background: rgba(29,78,216,0.07); padding: 1rem; border-radius: 0.5rem;">
                             <div style="font-size: 2rem; font-weight: 800; color: var(--primary); font-family: Poppins, sans-serif;">${data.totalRegistered}</div>
                             <div style="font-size: 0.8rem; color: var(--text-muted);">Registered</div>
@@ -372,9 +505,13 @@
                             <div style="font-size: 2rem; font-weight: 800; color: var(--primary); font-family: Poppins, sans-serif;">${data.maxParticipants}</div>
                             <div style="font-size: 0.8rem; color: var(--text-muted);">Capacity</div>
                         </div>
-                        <div style="text-align: center; background: rgba(29,78,216,0.07); padding: 1rem; border-radius: 0.5rem;">
-                            <div style="font-size: 2rem; font-weight: 800; color: var(--primary); font-family: Poppins, sans-serif;">${data.fillRate}%</div>
-                            <div style="font-size: 0.8rem; color: var(--text-muted);">Fill Rate</div>
+                        <div style="text-align: center; background: rgba(22,163,74,0.07); padding: 1rem; border-radius: 0.5rem;">
+                            <div style="font-size: 2rem; font-weight: 800; color: var(--success); font-family: Poppins, sans-serif;">${data.checkedInCount}</div>
+                            <div style="font-size: 0.8rem; color: var(--text-muted);">Checked In</div>
+                        </div>
+                        <div style="text-align: center; background: rgba(217,119,6,0.07); padding: 1rem; border-radius: 0.5rem;">
+                            <div style="font-size: 2rem; font-weight: 800; color: #d97706; font-family: Poppins, sans-serif;">${data.attendanceRate}%</div>
+                            <div style="font-size: 0.8rem; color: var(--text-muted);">Attendance</div>
                         </div>
                     </div>
                     <div style="margin-bottom: 1rem;">
@@ -385,13 +522,20 @@
                             <div style="width: ${fillWidth}%; height: 100%; background: var(--primary); border-radius: 100px; transition: width 0.6s ease;"></div>
                         </div>
                     </div>
+                    <div style="display:flex; justify-content:space-between; gap:1rem; margin-bottom:1rem; font-size:0.85rem; color:var(--text-muted);">
+                        <span><strong style="color:var(--success);">${data.checkedInCount}</strong> checked in</span>
+                        <span><strong style="color:#d97706;">${data.noShowCount}</strong> pending / no-show</span>
+                    </div>
                     <h4 style="margin: 1.5rem 0 0.75rem; font-size: 0.9rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Participants (${data.totalRegistered})</h4>
                     <div style="max-height: 250px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 0.5rem;">
                         ${data.participants.length === 0 ? '<p style="padding: 1rem; color: var(--text-muted); text-align: center;">No registrations yet.</p>' :
                         data.participants.map((p, i) => `
-                            <div style="padding: 0.6rem 1rem; display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-color); font-size: 0.875rem; ${i===0?'border-radius: 0.5rem 0.5rem 0 0':''}">
+                            <div style="padding: 0.6rem 1rem; display: flex; justify-content: space-between; gap: 0.75rem; border-bottom: 1px solid var(--border-color); font-size: 0.875rem; ${i===0?'border-radius: 0.5rem 0.5rem 0 0':''}">
                                 <span style="font-weight: 500;">${i+1}. ${p.name} <span style="color:var(--text-muted); font-size:0.8rem; font-weight:normal;">${[p.year, p.department].filter(Boolean).join(' | ')}</span></span>
-                                <span style="color: var(--text-muted);">${new Date(p.timestamp).toLocaleTimeString()}</span>
+                                <span style="display:flex; align-items:center; gap:0.5rem; color: var(--text-muted);">
+                                    <span style="font-size:0.72rem; font-weight:700; padding:0.18rem 0.55rem; border-radius:999px; background:${p.checkedIn ? 'rgba(22,163,74,0.12)' : 'rgba(217,119,6,0.12)'}; color:${p.checkedIn ? 'var(--success)' : '#d97706'};">${p.checkedIn ? 'Checked In' : 'Pending'}</span>
+                                    <span>${new Date((p.checkedInAt || p.timestamp)).toLocaleTimeString()}</span>
+                                </span>
                             </div>
                         `).join('')}
                     </div>

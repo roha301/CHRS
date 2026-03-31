@@ -9,6 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
     <div id="notification" class="notification"></div>
@@ -35,16 +36,33 @@
                     <option value="admin">Administrator</option>
                 </select>
 
-                <label for="login-email">College Email or Username</label>
-                <input type="text" id="login-email" placeholder="Enter your email or username" autocomplete="off" autocapitalize="none" spellcheck="false" required>
-
-                <label for="login-password">Password</label>
-                <div class="password-container">
-                    <input type="password" id="login-password" placeholder="Password" autocomplete="new-password" required>
-                    <span class="toggle-password" onclick="togglePassword('login-password', this)">Show</span>
+                <!-- Student Google Login Section -->
+                <div id="student-google-section">
+                    <div style="text-align: center; padding: 0.5rem 0;">
+                        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 0.75rem;">
+                            <i class="fas fa-shield-alt" style="color: var(--primary);"></i>
+                            Sign in with your <strong>@kkwagh.edu.in</strong> Google account
+                        </p>
+                        <button type="button" class="google-signin-btn" onclick="handleGoogleSignIn()" id="google-btn">
+                            <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+                            Sign in with Google
+                        </button>
+                    </div>
                 </div>
 
-                <button type="submit" class="btn btn-primary" style="width: 100%;">Sign In</button>
+                <!-- Admin Credentials Section -->
+                <div id="admin-credentials-section" style="display: none;">
+                    <label for="login-email">Username or Email</label>
+                    <input type="text" id="login-email" placeholder="Enter your email or username" autocomplete="off" autocapitalize="none" spellcheck="false" required>
+
+                    <label for="login-password">Password</label>
+                    <div class="password-container">
+                        <input type="password" id="login-password" placeholder="Password" autocomplete="new-password" required>
+                        <span class="toggle-password" onclick="togglePassword('login-password', this)">Show</span>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">Sign In</button>
+                </div>
             </form>
 
             <div id="admin-hint" style="display: none; margin-top: 1rem; padding: 0.75rem; background: rgba(29, 78, 216, 0.1); border-left: 3px solid var(--primary); border-radius: 4px; font-size: 0.85rem; color: var(--text-muted); text-align: center;">
@@ -54,22 +72,25 @@
             </div>
 
             <form id="register-form" style="display: none;" autocomplete="off">
+                <div style="text-align: center; padding: 0.5rem 0; margin-bottom: 1rem;">
+                    <p style="color: var(--text-muted); font-size: 0.85rem;">
+                        <i class="fas fa-info-circle" style="color: var(--primary);"></i>
+                        Students: Just use <strong>"Sign in with Google"</strong> on the Login tab with your @kkwagh.edu.in account. No registration needed!
+                    </p>
+                </div>
+
+                <div class="divider-or">Admin Registration</div>
+
                 <label for="reg-role">Register As</label>
                 <select id="reg-role" onchange="toggleCrnField()">
-                    <option value="user">Student</option>
                     <option value="admin">Administrator</option>
                 </select>
 
                 <label for="reg-name">Full Name</label>
-                <input type="text" id="reg-name" placeholder="John Doe" required>
+                <input type="text" id="reg-name" placeholder="Admin Name" required>
 
-                <div id="crn-container">
-                    <label for="reg-crn">CRN Number</label>
-                    <input type="text" id="reg-crn" placeholder="e.g. 123456">
-                </div>
-
-                <label for="reg-email">College Email</label>
-                <input type="email" id="reg-email" placeholder="name@kkwagh.edu.in" required>
+                <label for="reg-email">Email</label>
+                <input type="email" id="reg-email" placeholder="admin@domain.com" required>
 
                 <label for="reg-password">Password</label>
                 <div class="password-container">
@@ -83,7 +104,9 @@
                     <span class="toggle-password" onclick="togglePassword('reg-confirm-password', this)">Show</span>
                 </div>
 
-                <button type="submit" class="btn btn-primary" style="width: 100%;">Create Account</button>
+                <input type="hidden" id="reg-crn" value="">
+
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Create Admin Account</button>
             </form>
         </div>
     </div>
@@ -98,9 +121,7 @@
         }
 
         function toggleCrnField() {
-            const role = document.getElementById('reg-role').value;
-            const crnContainer = document.getElementById('crn-container');
-            crnContainer.style.display = role === 'user' ? 'block' : 'none';
+            // No CRN field needed anymore
         }
 
         function togglePassword(inputId, toggle) {
@@ -114,38 +135,79 @@
             }
         }
 
-        function clearLoginFields() {
-            document.getElementById('login-role').value = 'user';
-            document.getElementById('login-email').value = '';
-            document.getElementById('login-password').value = '';
-            toggleAdminHint();
-        }
-
-        function toggleAdminHint() {
+        function toggleLoginSections() {
             const role = document.getElementById('login-role').value;
-            document.getElementById('admin-hint').style.display = role === 'admin' ? 'block' : 'none';
+            const googleSection = document.getElementById('student-google-section');
+            const adminSection = document.getElementById('admin-credentials-section');
+            const adminHint = document.getElementById('admin-hint');
+
+            if (role === 'admin') {
+                googleSection.style.display = 'none';
+                adminSection.style.display = 'block';
+                adminHint.style.display = 'block';
+            } else {
+                googleSection.style.display = 'block';
+                adminSection.style.display = 'none';
+                adminHint.style.display = 'none';
+            }
         }
 
-        document.getElementById('login-role').addEventListener('change', toggleAdminHint);
+        document.getElementById('login-role').addEventListener('change', toggleLoginSections);
 
-        function initAuthPage() {
-            clearLoginFields();
-            toggleCrnField();
-
-            // Some browsers/password managers restore credentials after initial paint.
-            window.setTimeout(clearLoginFields, 50);
-        }
-
-        document.getElementById('login-form').onsubmit = async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('login-email').value;
-            const password = document.getElementById('login-password').value;
-            const role = document.getElementById('login-role').value;
-
-            if (role === 'user' && !email.endsWith('@kkwagh.edu.in')) {
-                showNotification('Students must use @kkwagh.edu.in email domain.', 'error');
+        // Google Sign-In
+        function handleGoogleSignIn() {
+            const clientId = window.GOOGLE_CLIENT_ID;
+            if (!clientId || clientId === 'YOUR_GOOGLE_CLIENT_ID_HERE') {
+                showNotification('Google Sign-In is not configured yet. Please set up a Google Client ID.', 'error');
                 return;
             }
+
+            google.accounts.id.initialize({
+                client_id: clientId,
+                callback: handleGoogleCredentialResponse,
+                hd: 'kkwagh.edu.in'  // Restrict to kkwagh.edu.in domain
+            });
+            google.accounts.id.prompt();
+        }
+
+        async function handleGoogleCredentialResponse(response) {
+            try {
+                showNotification('Signing in with Google...', 'info');
+                const data = await api.auth.googleLogin(response.credential);
+                localStorage.setItem('token', data.token);
+                localStorage.setItem('user', JSON.stringify(data.user));
+                showNotification('Login successful!', 'success');
+                setTimeout(() => {
+                    window.location.href = '/pages/dashboard.html';
+                }, 1000);
+            } catch (err) {
+                showNotification(err.message, 'error');
+            }
+        }
+
+        // Fetch Google Client ID from server config
+        window.GOOGLE_CLIENT_ID = '';
+        (async function loadGoogleClientId() {
+            try {
+                // Try to fetch from a simple endpoint or use env
+                const resp = await fetch(`${window.location.origin}/api/auth/google-client-id`);
+                if (resp.ok) {
+                    const data = await resp.json();
+                    window.GOOGLE_CLIENT_ID = data.clientId;
+                }
+            } catch {
+                // Will be set from inline config if available
+            }
+        })();
+
+        // Admin login form submission
+        document.getElementById('login-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const role = document.getElementById('login-role').value;
+            if (role !== 'admin') return; // Students use Google
+
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
 
             try {
                 const data = await api.auth.login({ email, password, role });
@@ -167,12 +229,6 @@
             const password = document.getElementById('reg-password').value;
             const confirmPassword = document.getElementById('reg-confirm-password').value;
             const role = document.getElementById('reg-role').value;
-            const crn = document.getElementById('reg-crn').value;
-
-            if (role === 'user' && !email.endsWith('@kkwagh.edu.in')) {
-                showNotification('Students must use @kkwagh.edu.in email domain.', 'error');
-                return;
-            }
 
             if (password !== confirmPassword) {
                 showNotification('Passwords do not match.', 'error');
@@ -180,7 +236,7 @@
             }
 
             try {
-                await api.auth.register({ name, crn, email, password, role });
+                await api.auth.register({ name, email, password, role });
                 showNotification('Account created! Please login.', 'success');
                 switchAuthTab('login');
             } catch (err) {
@@ -188,8 +244,9 @@
             }
         };
 
-        window.addEventListener('DOMContentLoaded', initAuthPage);
-        window.addEventListener('pageshow', clearLoginFields);
+        window.addEventListener('DOMContentLoaded', () => {
+            toggleLoginSections();
+        });
     </script>
 </body>
 </html>
