@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Self Check-in - KKWIEER</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body onload="loadEvent()">
+    <div id="notification" class="notification"></div>
+
+    <nav class="glass-card" style="margin: 1rem; padding: 1rem 2rem; border-radius: 1rem; display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <img src="../assets/kkw_logo.png" alt="KKW Logo" style="height: 30px; width: auto;">
+            <h2 style="color: white; font-family: Poppins, sans-serif; font-size: 1.4rem; margin: 0;">KKWIEER</h2>
+        </div>
+        <div style="font-size: 0.9rem; color: rgba(255,255,255,0.8);">Self Check-in Portal</div>
+    </nav>
+
+    <main style="padding: 2rem; max-width: 560px; margin: 0 auto;">
+        <div id="state-loading" class="glass-card animate-fade" style="text-align: center; padding: 3rem;">
+            <i class="fas fa-spinner fa-spin" style="font-size: 2rem; color: var(--primary); margin-bottom: 1rem;"></i>
+            <p style="color: var(--text-muted);">Loading event details...</p>
+        </div>
+
+        <div id="state-notfound" class="glass-card animate-fade" style="display: none; text-align: center; padding: 3rem;">
+            <i class="fas fa-exclamation-triangle" style="font-size: 2.5rem; color: var(--error); margin-bottom: 1rem;"></i>
+            <h2>Event Not Found</h2>
+            <p style="color: var(--text-muted); margin-top: 0.5rem;">This event link may be invalid or expired.</p>
+        </div>
+
+        <div id="state-checkin" style="display: none;">
+            <div class="glass-card animate-fade" style="margin-bottom: 1.5rem;">
+                <div style="display: flex; align-items: start; gap: 1rem;">
+                    <div style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), var(--primary-light)); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 1.5rem; color: white;">
+                        <i class="fas fa-calendar-star"></i>
+                    </div>
+                    <div>
+                        <h2 id="ev-title" style="margin-bottom: 0.25rem;"></h2>
+                        <p id="ev-organizer" style="color: var(--text-muted); font-size: 0.875rem;"></p>
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1.25rem; padding-top: 1.25rem; border-top: 1px solid var(--border-color);">
+                    <div>
+                        <div style="font-size: 0.75rem; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem;">Date</div>
+                        <div id="ev-date" style="font-weight: 600; font-size: 0.95rem;"></div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.75rem; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem;">Time</div>
+                        <div id="ev-time" style="font-weight: 600; font-size: 0.95rem;"></div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.75rem; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem;">Venue</div>
+                        <div id="ev-hall" style="font-weight: 600; font-size: 0.95rem;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-card animate-fade">
+                <h3 style="margin-bottom: 0.5rem; color: var(--primary);"><i class="fas fa-user-check"></i> Self Check-in</h3>
+                <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1.25rem;">Enter the exact full name you used when registering for this event.</p>
+                <form id="checkin-form">
+                    <label>Your Registered Name</label>
+                    <input type="text" id="participant-name" placeholder="e.g. Rahul Sharma" required style="font-size: 1rem; margin-bottom: 0.75rem;">
+                    
+                    <button type="submit" id="submit-btn" class="btn btn-primary" style="width: 100%; padding: 0.85rem; font-size: 1rem; margin-top: 1rem;">
+                        <i class="fas fa-qrcode"></i> Check In
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <div id="state-success" style="display: none;">
+            <div class="glass-card animate-fade" style="text-align: center; padding: 3rem;">
+                <div style="width: 80px; height: 80px; border-radius: 50%; background: rgba(22, 163, 74, 0.1); border: 2px solid var(--success); display: flex; justify-content: center; align-items: center; margin: 0 auto 1.5rem; font-size: 2rem; color: var(--success);">
+                    <i class="fas fa-check"></i>
+                </div>
+                <h2 style="color: var(--success); margin-bottom: 0.5rem;">Checked In!</h2>
+                <p id="success-msg" style="color: var(--text-muted); margin-bottom: 1.5rem;">Welcome to the event!</p>
+            </div>
+        </div>
+    </main>
+
+    <script src="../js/api.js"></script>
+    <script>
+        let eventId = null;
+
+        async function loadEvent() {
+            const params = new URLSearchParams(window.location.search);
+            eventId = params.get('eventId');
+
+            if (!eventId) {
+                setState('notfound');
+                return;
+            }
+
+            try {
+                const ev = await api.events.getOne(eventId);
+                document.getElementById('ev-title').textContent = ev.title;
+                document.getElementById('ev-organizer').textContent = `Organized by ${ev.organizerName}${ev.club && ev.club !== 'None' ? ' - ' + ev.club : ''}`;
+                document.getElementById('ev-date').textContent = new Date(ev.date).toLocaleDateString('en-IN', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+                document.getElementById('ev-time').textContent = `${ev.startTime} - ${ev.endTime}`;
+                document.getElementById('ev-hall').textContent = ev.hallName;
+                setState('checkin');
+            } catch {
+                setState('notfound');
+            }
+        }
+
+        function setState(state) {
+            ['loading', 'notfound', 'checkin', 'success'].forEach((id) => {
+                const el = document.getElementById(`state-${id}`);
+                if (el) el.style.display = id === state ? 'block' : 'none';
+            });
+        }
+
+        document.getElementById('checkin-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('submit-btn');
+            const originalHtml = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Checking in...';
+            btn.disabled = true;
+
+            const name = document.getElementById('participant-name').value.trim();
+
+            try {
+                const res = await api.fetch(`/events/${eventId}/self-checkin`, {
+                    method: 'POST',
+                    body: JSON.stringify({ name })
+                });
+                document.getElementById('success-msg').textContent = res.message;
+                setState('success');
+            } catch (err) {
+                showNotification(err.message, 'error');
+                btn.innerHTML = originalHtml;
+                btn.disabled = false;
+            }
+        };
+    </script>
+</body>
+</html>

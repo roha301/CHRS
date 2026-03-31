@@ -424,9 +424,17 @@
         async function showQR(eventId, mode = 'register') {
             try {
                 const ev = await api.events.getOne(eventId);
-                const qrPath = mode === 'checkin'
-                    ? (await api.events.getCheckInAccess(eventId)).checkInPath
-                    : (ev.registrationPath || `/pages/event_register.html?eventId=${eventId}`);
+                
+                let qrPath = '';
+                let linkPath = '';
+                
+                if (mode === 'checkin') {
+                    qrPath = `/pages/event_self_checkin.html?eventId=${eventId}`;
+                    linkPath = (await api.events.getCheckInAccess(eventId)).checkInPath;
+                } else {
+                    qrPath = ev.registrationPath || `/pages/event_register.html?eventId=${eventId}`;
+                    linkPath = qrPath;
+                }
 
                 // If the browser is on localhost, fetch the real LAN IP so phones can reach the server
                 let baseUrl = window.location.origin;
@@ -439,21 +447,22 @@
                         console.warn('Could not fetch server-info, using origin:', e);
                     }
                 }
-                const fullUrl = baseUrl + qrPath;
+                const fullQrUrl = baseUrl + qrPath;
+                const fullLinkUrl = baseUrl + linkPath;
 
                 document.getElementById('qr-event-title').textContent = ev.title;
                 document.getElementById('qr-event-details').innerHTML = `<i class="fas fa-map-marker-alt" style="margin-right: 4px;"></i>${ev.hallName} &nbsp;|&nbsp; <i class="fas fa-calendar" style="margin-right: 4px;"></i>${fmtDate(ev.date)}`;
                 document.getElementById('qr-modal-title').textContent = mode === 'checkin' ? 'Check-in Desk Poster' : 'Registration Poster';
                 document.getElementById('qr-modal-description').textContent = mode === 'checkin'
-                    ? 'Scan this at the venue to open the attendance desk.'
+                    ? 'Scan to Self Check-in, or use link below for Admin Desk.'
                     : 'Share this beautiful poster for participants to register!';
-                document.getElementById('qr-link').href = fullUrl;
-                document.getElementById('qr-link').textContent = fullUrl;
+                document.getElementById('qr-link').href = fullLinkUrl;
+                document.getElementById('qr-link').textContent = fullLinkUrl;
 
                 const container = document.getElementById('qr-canvas');
                 container.innerHTML = '';
                 new QRCode(container, {
-                    text: fullUrl,
+                    text: fullQrUrl,
                     width: 200,
                     height: 200,
                     colorDark: '#000000',
@@ -469,7 +478,7 @@
                     const img = container.querySelector('img') || container.querySelector('canvas');
                     const qrDataUrl = img.tagName === 'CANVAS' ? img.toDataURL('image/png') : img.src;
 
-                    createBeautifulPoster(ev, qrDataUrl, fullUrl, mode).then(posterDataUrl => {
+                    createBeautifulPoster(ev, qrDataUrl, fullLinkUrl, mode).then(posterDataUrl => {
                         const link = document.createElement('a');
                         link.download = `${ev.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_${mode}_poster.jpg`;
                         link.href = posterDataUrl;

@@ -287,6 +287,46 @@ def register_for_event(event_id):
         return jsonify({'message': str(e)}), 500
 
 
+@events_bp.route('/<event_id>/self-checkin', methods=['POST'])
+def self_checkin(event_id):
+    try:
+        event = events_collection.find_one({'_id': event_id})
+        if not event:
+            return jsonify({'message': 'Event not found'}), 404
+
+        event = ensure_event_runtime_fields(event)
+        payload = request.get_json(silent=True) or {}
+        name = payload.get('name', '').strip()
+
+        if not name:
+            return jsonify({'message': 'Name is required'}), 400
+
+        participants = list(event.get('participants', []))
+        target = None
+        for participant in participants:
+            if participant.get('name', '').lower() == name.lower():
+                target = participant
+                break
+
+        if not target:
+            return jsonify({'message': 'Name not found in the registration list. Please check your spelling.'}), 404
+
+        if target.get('checkedIn'):
+            return jsonify({'message': 'You are already checked in!'}), 400
+
+        target['checkedIn'] = True
+        target['checkedInAt'] = datetime.datetime.utcnow().isoformat()
+
+        events_collection.update_one(
+            {'_id': event_id},
+            {'$set': {'participants': participants}}
+        )
+
+        return jsonify({'message': f'Successfully checked in for {event["title"]}!', 'participant': target})
+    except Exception as e:
+        return jsonify({'message': str(e)}), 500
+
+
 @events_bp.route('/<event_id>/checkin/access', methods=['GET'])
 @auth_required
 def get_checkin_access(event_id):
