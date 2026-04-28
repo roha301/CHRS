@@ -5,9 +5,12 @@ from data import halls as seed_halls
 
 load_dotenv()
 
+import certifi
+
 # Initialize MongoDB client
 uri = os.getenv('MONGODB_URI')
-client = MongoClient(uri)
+ca = certifi.where()
+client = MongoClient(uri, tlsCAFile=ca)
 db = client.get_database('chrs') # Default DB name
 
 # Collections

@@ -7,3 +7,5 @@ qrcode
 pillow
 pymongo
 requests
+certifi
+gunicorn
